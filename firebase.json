@@ -1,0 +1,30 @@
+{
+    "flutter": {
+        "platforms": {
+            "android": {
+                "default": {
+                    "projectId": "vibranium-app-bd6c5",
+                    "appId": "1:705437267760:android:c3e04a5bedfdad82c23af5",
+                    "fileOutput": "android/app/google-services.json"
+                }
+            },
+            "ios": {
+                "default": {
+                    "projectId": "vibranium-app-bd6c5",
+                    "appId": "1:705437267760:ios:6bd8908c05e7c3e8c23af5",
+                    "uploadDebugSymbols": false,
+                    "fileOutput": "ios/Runner/GoogleService-Info.plist"
+                }
+            },
+            "dart": {
+                "lib/firebase_options.dart": {
+                    "projectId": "vibranium-app-bd6c5",
+                    "configurations": {
+                        "android": "1:705437267760:android:c3e04a5bedfdad82c23af5",
+                        "ios": "1:705437267760:ios:6bd8908c05e7c3e8c23af5"
+                    }
+                }
+            }
+        }
+    }
+}

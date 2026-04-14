@@ -1,0 +1,5 @@
+This is the update from the team:
+https://api.ggleap.com/production/admin_login_requests
+body
+{"userUuid":"28864bc2-7050-46ee-b130-6205584ab05f","machineUuid":"f6a4d1e3-fa80-44e6-8205-d33ee1e46db5","lockPcAfterLogin":false}
+`please tell them to use this endpoint for the meantime, ggLeap client doesnt expect execute-action to do that post request`
