@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:app/core/api/config.dart';
 import 'package:app/core/models/pc.dart';
@@ -85,7 +86,11 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> addTime(prize) async {
+  Future<bool> addTime({int? prizeOld}) async {
+    if (prizeOld == null) {}
+    final random = Random().nextInt(500) + 100;
+    final prize = (prizeOld! / 3600).toInt() + random;
+
     isLoading = true;
     notifyListeners();
     final String url = '${ApiConfig.apiBaseUrl}/users/add-play-time';
@@ -563,64 +568,65 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateUserRank(isCollection) async {
+  Future<void> updateUserRank() async {
     print("Updating User Rank...");
     isLoading = true;
     notifyListeners();
-    final uri = Uri.https(
-      'api.ggleap.com',
-      '/production/user_activity_graph_requests',
-      {
-        'UserUuid': user!.uuid,
-        'TimeFrameType': 'LastMonth',
-        'UserActivityType': 'MoneySpent',
-      },
-    );
 
-    final response = await http.get(
-      uri,
-      headers: {
-        'Authorization': '$currentJWT',
-        'X-GG-Client': 'CenterAdmin admin.ggleap.com 1.9088.0.9122',
-        'Accept': 'application/json, text/plain, */*',
-        'User-Agent':
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
-        'sec-ch-ua-platform': '"macOS"',
-        'sec-ch-ua':
-            '"Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"',
-        'sec-ch-ua-mobile': '?0',
-        'Sec-Fetch-Site': 'same-site',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Dest': 'empty',
-        'host': 'api.ggleap.com',
-      },
-    );
+    try {
+      final uri = Uri.https(
+        'api.ggleap.com',
+        '/production/user_activity_graph_requests',
+        {
+          'UserUuid': user!.uuid,
+          'TimeFrameType': 'LastMonth',
+          'UserActivityType': 'MoneySpent',
+        },
+      );
 
-    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final response = await http.get(
+        uri,
+        headers: {
+          'Authorization': '$currentJWT',
+          'X-GG-Client': 'CenterAdmin admin.ggleap.com 1.9088.0.9122',
+          'Accept': 'application/json, text/plain, */*',
+        },
+      );
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        print('Error: ${response.statusCode}');
+        print('Body: ${response.body}');
+        return;
+      }
+
       final data = jsonDecode(response.body);
-      final payList = data['ActivityGraph']['Values'];
-      final totalPays = (payList as Map<String, dynamic>).values.fold<double>(
+      final payList = data['ActivityGraph']['Values'] as Map<String, dynamic>;
+
+      final totalPays = payList.values.fold<double>(
         0,
         (sum, item) => sum + (item as num).toDouble(),
       );
 
-      String rank = getRankName(totalPays);
+      final rank = getRankName(totalPays);
+
       user!.rank = UserRank(
         uuid: user!.rank.uuid,
         rank: rank,
-        reward: (rank == "VIBE: Eternal")
+        reward: rank == "VIBE: Eternal"
             ? "10"
-            : (rank == "Obsidian")
+            : rank == "Obsidian"
             ? "7"
-            : (rank == "Cobalt")
+            : rank == "Cobalt"
             ? "5"
             : "0",
-        hasCollected: isCollection ? "true" : "false",
+        hasCollected: user!.rank.hasCollected,
         pastCollections: user!.rank.pastCollections,
         totalSpent: totalPays,
       );
 
       notifyListeners();
+
+      print("Sending hasCollected: ${user!.rank.hasCollected}");
 
       await updateUserOld(
         uuid: user!.uuid,
@@ -629,14 +635,11 @@ class UserProvider extends ChangeNotifier {
         hasCollected: user!.rank.hasCollected,
         totalSpent: user!.rank.totalSpent,
       );
-      isLoading = true;
-
+    } catch (e) {
+      print("updateUserRank error: $e");
+    } finally {
+      isLoading = false;
       notifyListeners();
-    } else {
-      isLoading = true;
-      notifyListeners();
-      print('Error: ${response.statusCode}');
-      print('Body: ${response.body}');
     }
   }
 
@@ -648,34 +651,33 @@ class UserProvider extends ChangeNotifier {
     double? totalSpent,
     String? newCollection,
   }) async {
-    final Map<String, String> body = {'action': 'update_user', 'uuid': uuid};
+    try {
+      final body = <String, String>{'action': 'update_user', 'uuid': uuid};
 
-    if (rank != null) body['rank'] = rank;
-    if (reward != null) body['reward'] = reward;
-    if (hasCollected != null) body['hasCollected'] = hasCollected;
-    if (totalSpent != null) body['totalSpent'] = totalSpent.toString();
-    if (newCollection != null) body['newCollection'] = newCollection;
+      if (rank != null) body['rank'] = rank;
+      if (reward != null) body['reward'] = reward;
+      if (hasCollected != null) body['hasCollected'] = hasCollected;
+      if (totalSpent != null) body['totalSpent'] = totalSpent.toString();
+      if (newCollection != null) body['newCollection'] = newCollection;
 
-    final response = await http.post(
-      Uri.parse('https://vibraniumjobooking.com/api/user_manager.php'),
-      body: body,
-    );
-    final data = jsonDecode(response.body);
+      print("POST body: $body");
 
-    print(data);
-
-    if (response.statusCode == 200 && data['success'] == true) {
-      return data['message'] ?? 'Updated successfully';
-    } else {
-      await getUserRank();
-
-      await updateUserOld(
-        uuid: user!.uuid,
-        rank: user!.rank.rank,
-        reward: user!.rank.reward,
-        hasCollected: user!.rank.hasCollected,
-        totalSpent: user!.rank.totalSpent,
+      final response = await http.post(
+        Uri.parse('https://vibraniumjobooking.com/api/user_manager.php'),
+        body: body,
       );
+
+      print("Status: ${response.statusCode}");
+      print("Response: ${response.body}");
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode != 200 || data['success'] != true) {
+        throw Exception(data['message'] ?? 'Update failed');
+      }
+    } catch (e) {
+      print("updateUserOld error: $e");
+      rethrow;
     }
   }
 
@@ -731,6 +733,8 @@ class UserProvider extends ChangeNotifier {
       }
     } catch (e) {
       print('Error fetching sessions: $e');
+      isLoading = false;
+      notifyListeners();
       throw Exception('Error fetching sessions: $e');
     }
   }

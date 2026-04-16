@@ -2,7 +2,7 @@ class UserRank {
   final String uuid;
   final String rank;
   final String reward;
-  final String hasCollected;
+  String hasCollected;
   final List<dynamic> pastCollections;
   final double totalSpent;
 

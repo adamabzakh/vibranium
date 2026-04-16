@@ -70,6 +70,8 @@ class PcProvider extends ChangeNotifier {
           .toList();
       notifyListeners();
     } else {
+      isLoading = false;
+      notifyListeners();
       throw Exception('Failed to fetch consoles: ${response.body}');
     }
   }

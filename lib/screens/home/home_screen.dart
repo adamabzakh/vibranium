@@ -58,8 +58,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     await userProvider.getCurrectLoggedingPC(pcProvider);
     await pcProvider.fetchConsoles();
-    await userProvider.updateUserRank(false);
+    await userProvider.updateUserRank();
     await userProvider.getUserRank();
+
+    print("Collection status : " + userProvider.user!.rank.hasCollected);
 
     setState(() {
       isLoading = false;
@@ -329,7 +331,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               title: 'Vibranium Lounge',
                               subtitle: 'Vibranium Cafe & Restaurant',
                               onTap: () => Navigator.of(context).push<void>(
-                                vibraniumPageRoute(const LoungeScreen()),
+                                vibraniumPageRoute(const StunningMenuScreen()),
                               ),
                             ),
                           ]),
@@ -623,40 +625,30 @@ class _VibraniumVisaCardState extends State<VibraniumVisaCard> {
                     ],
                   ),
 
-                  (userProvider.user!.rank.hasCollected == "false")
+                  (userProvider.user!.rank.hasCollected == "false" &&
+                          userProvider.user!.rank.rank != "Unranked")
                       ? ElevatedButton(
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: Text('Collect your reward'),
-                                  content: Text(
-                                    'Are you sure you want to collect your ${userProvider.user!.rank.reward} hours reward? The next reward will be available at ${DateFormat("yyyy/MM/dd").format(DateTime.now().add(Duration(days: 7)))}',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(context).pop(),
-                                      child: Text('Cancel'),
-                                    ),
-                                    ElevatedButton(
-                                      onPressed: () async {
-                                        userProvider.addTime(
-                                          int.parse(
-                                            userProvider.user!.rank.reward,
-                                          ),
-                                        );
-                                        userProvider.updateUserRank(true);
-
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: Text('Collect'),
-                                    ),
-                                  ],
-                                );
-                              },
+                          onPressed: () async {
+                            setState(() {
+                              userProvider.user!.rank.hasCollected = "true";
+                              userProvider.isLoading = true;
+                              userProvider.notifyListeners();
+                            });
+                            await userProvider.addTime(
+                              prizeOld: int.parse(
+                                userProvider.user!.rank.reward,
+                              ),
                             );
+                            await userProvider.updateUserRank();
+                            userProvider.setUser(
+                              await userProvider.getUserByUuid(
+                                userProvider.user!.uuid,
+                              ),
+                            );
+                            setState(() {
+                              userProvider.isLoading = false;
+                              userProvider.notifyListeners();
+                            });
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: themeColor,
@@ -912,7 +904,7 @@ class _VibraniumDrawer extends StatelessWidget {
                 Navigator.of(context).pop();
                 Navigator.of(
                   context,
-                ).push<void>(vibraniumPageRoute(const LoungeScreen()));
+                ).push<void>(vibraniumPageRoute(const StunningMenuScreen()));
               },
             ),
             _DrawerTile(
