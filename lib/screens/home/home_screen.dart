@@ -1,7 +1,6 @@
-import 'dart:convert';
-
 import 'package:app/core/func/date_time.dart';
 import 'package:app/core/models/session.dart';
+import 'package:app/core/models/user_rank.dart';
 import 'package:app/core/providers/pc_provider.dart';
 import 'package:app/core/providers/queue_provider.dart';
 import 'package:app/core/providers/user_provider.dart';
@@ -10,19 +9,16 @@ import 'package:app/core/theme/vibranium_theme.dart';
 import 'package:app/screens/auth/login_screen.dart';
 import 'package:app/screens/book_pc/book_pc_screen.dart';
 import 'package:app/screens/events/events_screen.dart';
-import 'package:app/screens/facility/facility_status_screen.dart';
 import 'package:app/screens/home/rank.dart';
 import 'package:app/screens/lounge/lounge_screen.dart';
 import 'package:app/screens/points/points_screen.dart';
 import 'package:app/screens/tournaments/tournaments_screen.dart';
 import 'package:app/screens/waiting_list/waiting_list.dart';
 import 'package:app/screens/wallet/time_balance_screen.dart';
-import 'package:app/screens/wallet/wallet_topup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:ticketcher/ticketcher.dart';
 
 const String _kLogoAsset = 'assets/branding/vibranium_logo.png';
 
@@ -34,6 +30,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  bool isLoading = false;
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +39,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void init() async {
+    setState(() {
+      isLoading = true;
+    });
     final userProvider = context.read<UserProvider>();
     final pcProvider = context.read<PcProvider>();
     final queueProvider = context.read<QueueProvider>();
@@ -57,12 +58,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
     await userProvider.getCurrectLoggedingPC(pcProvider);
     await pcProvider.fetchConsoles();
-
+    await userProvider.updateUserRank(false);
     await userProvider.getUserRank();
-    setState(() {});
-  }
 
-  bool isLoading = false;
+    setState(() {
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,13 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (scaffoldContext) {
           return RefreshIndicator(
             onRefresh: () async {
-              setState(() {
-                isLoading = true;
-              });
               init();
-              setState(() {
-                isLoading = false;
-              });
             },
 
             child: (isLoading)
@@ -398,9 +394,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget rankCard(String rank) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+  Widget rankCard(UserRank rank) {
     final UserProvider userProvider = context.read<UserProvider>();
     return InkWell(
       splashColor: Colors.transparent,
@@ -412,57 +406,111 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 14),
-        child: VibraniumVisaCard(
-          totalSpent: userProvider.user!.totalSpentLastMonth ?? 0.0,
-          userName:
-              "${userProvider.user!.firstName} ${userProvider.user!.lastName} (${userProvider.user!.username})",
+        child: Stack(
+          children: [
+            VibraniumVisaCard(
+              totalSpent: rank.totalSpent,
+              userName:
+                  "${userProvider.user!.firstName} ${userProvider.user!.lastName} (${userProvider.user!.username})",
+            ),
+            (rank.totalSpent <= 50)
+                ? Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    width: double.infinity,
+                    height: 230,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.lock_rounded, color: Colors.black, size: 32),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Your rank is locked',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                          child: Text(
+                            'Raise your monthly spending to minimum 50 JOD to unlock your Loyality Pass \n\nCurrent monthly spending: ${rank.totalSpent.toStringAsFixed(2)} JOD',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Container(),
+          ],
         ),
       ),
     );
   }
 }
 
-class VibraniumVisaCard extends StatelessWidget {
-  final double totalSpent;
+class VibraniumVisaCard extends StatefulWidget {
+  double totalSpent;
   final String userName;
 
-  const VibraniumVisaCard({
+  VibraniumVisaCard({
     super.key,
     required this.totalSpent,
     required this.userName,
   });
 
   @override
-  Widget build(BuildContext context) {
-    // 1. Logic for Rank Data
-    String rankName = "UNRANKED";
-    Color themeColor = Colors.grey;
-    double progress = 0.0;
-    int nextGoal = 50;
+  State<VibraniumVisaCard> createState() => _VibraniumVisaCardState();
+}
 
-    if (totalSpent >= 200) {
+class _VibraniumVisaCardState extends State<VibraniumVisaCard> {
+  @override
+  Widget build(BuildContext context) {
+    String rankName = "";
+    Color themeColor = const Color(0xFFCD7F32); // default bronze-like
+    double progress = 0.0;
+    double nextGoal = 50.0;
+
+    final userProvider = context.read<UserProvider>();
+
+    if (widget.totalSpent >= 200) {
       rankName = "VIBE: ETERNAL";
       themeColor = const Color(0xFF00E5FF); // Electric Blue
       progress = 1.0;
-      nextGoal = 200;
-    } else if (totalSpent >= 150) {
+      nextGoal = 200.0;
+    } else if (widget.totalSpent >= 150) {
       rankName = "OBSIDIAN";
       themeColor = const Color(0xFF673AB7); // Purple
-      progress = (totalSpent - 150) / 50;
-      nextGoal = 200;
-    } else if (totalSpent >= 100) {
-      rankName = "TITANIUM";
-      themeColor = const Color(0xFF673AB7);
-      progress = (totalSpent - 100) / 50;
-      nextGoal = 150;
-    } else if (totalSpent >= 50) {
-      rankName = "cobalt";
-      themeColor = const Color(0xFF673AB7);
-      progress = (totalSpent - 50) / 50;
-      nextGoal = 100;
+      progress = (widget.totalSpent - 150) / 50;
+      nextGoal = 200.0;
+    } else if (widget.totalSpent >= 100) {
+      rankName = "Cobalt";
+      themeColor = const Color(0xFF3F51B5); // Blue
+      progress = (widget.totalSpent - 100) / 50;
+      nextGoal = 150.0;
+    } else if (widget.totalSpent >= 50) {
+      rankName = "Unranked";
+      themeColor = const Color(0xFFC0C0C0);
+      progress = (widget.totalSpent - 50) / 50;
+      nextGoal = 100.0;
     } else {
-      progress = totalSpent / 50;
+      rankName = "None";
+      themeColor = const Color(0xFFCD7F32);
+      progress = widget.totalSpent / 50;
+      nextGoal = 50.0;
     }
+
+    // keep progress safe
+    progress = progress.clamp(0.0, 1.0);
 
     final imagePath =
         "assets/branding/${rankName.toLowerCase().replaceAll(" ", "_").replaceAll(":", "")}.png";
@@ -492,19 +540,21 @@ class VibraniumVisaCard extends StatelessWidget {
         child: Stack(
           children: [
             // --- RANK IMAGE PLACEHOLDER ---
-            Positioned(
-              right: 20,
-              top: 40,
-              child: Opacity(
-                opacity: 0.4,
-                child: Image.asset(
-                  imagePath, // Pass your rank icon here
-                  width: 140,
-                  height: 140,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
+            (rankName == "None")
+                ? Container()
+                : Positioned(
+                    right: 20,
+                    top: 40,
+                    child: Opacity(
+                      opacity: 0.4,
+                      child: Image.asset(
+                        imagePath, // Pass your rank icon here
+                        width: 140,
+                        height: 140,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
 
             // --- CARD CONTENT ---
             Padding(
@@ -553,7 +603,7 @@ class VibraniumVisaCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        userName.toUpperCase(),
+                        widget.userName.toUpperCase(),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -561,10 +611,10 @@ class VibraniumVisaCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 5),
-                      (totalSpent >= 200)
+                      (widget.totalSpent >= 200)
                           ? Container()
                           : Text(
-                              "${nextGoal - totalSpent} JD TO NEXT LEVEL",
+                              "${nextGoal - widget.totalSpent} JD TO NEXT LEVEL",
                               style: const TextStyle(
                                 color: Colors.white54,
                                 fontSize: 10,
@@ -572,6 +622,57 @@ class VibraniumVisaCard extends StatelessWidget {
                             ),
                     ],
                   ),
+
+                  (userProvider.user!.rank.hasCollected == "false")
+                      ? ElevatedButton(
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: Text('Collect your reward'),
+                                  content: Text(
+                                    'Are you sure you want to collect your ${userProvider.user!.rank.reward} hours reward? The next reward will be available at ${DateFormat("yyyy/MM/dd").format(DateTime.now().add(Duration(days: 7)))}',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
+                                      child: Text('Cancel'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () async {
+                                        userProvider.addTime(
+                                          int.parse(
+                                            userProvider.user!.rank.reward,
+                                          ),
+                                        );
+                                        userProvider.updateUserRank(true);
+
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: Text('Collect'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: themeColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(9),
+                            ),
+                          ),
+                          child: Text(
+                            'Collect your ${userProvider.user!.rank.reward} Hours reward',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        )
+                      : Container(),
                 ],
               ),
             ),
@@ -771,17 +872,6 @@ class _VibraniumDrawer extends StatelessWidget {
               onTap: () => Navigator.of(context).pop(),
             ),
             _DrawerTile(
-              icon: Icons.dns_rounded,
-              iconColor: colorScheme.tertiary,
-              title: 'Venue status',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(
-                  context,
-                ).push<void>(vibraniumPageRoute(const FacilityStatusScreen()));
-              },
-            ),
-            _DrawerTile(
               icon: Icons.computer_rounded,
               iconColor: colorScheme.primary,
               title: 'Book PC',
@@ -793,14 +883,14 @@ class _VibraniumDrawer extends StatelessWidget {
               },
             ),
             _DrawerTile(
-              icon: Icons.add_card_rounded,
+              icon: Icons.format_list_numbered,
               iconColor: colorScheme.secondary,
-              title: 'Wallet & balance',
+              title: 'Wait list & Queues',
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(
                   context,
-                ).push<void>(vibraniumPageRoute(const WalletTopupScreen()));
+                ).push<void>(vibraniumPageRoute(const WaitingListScreen()));
               },
             ),
             _DrawerTile(
@@ -863,18 +953,16 @@ class _DrawerTile extends StatelessWidget {
     required this.iconColor,
     required this.title,
     required this.onTap,
-    this.subtitle,
   });
   final IconData icon;
   final Color iconColor;
   final String title;
-  final String? subtitle;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+
     return ListTile(
       leading: Icon(icon, color: iconColor, size: 24),
       title: Text(
@@ -883,14 +971,7 @@ class _DrawerTile extends StatelessWidget {
           fontWeight: FontWeight.w600,
         ),
       ),
-      subtitle: subtitle == null
-          ? null
-          : Text(
-              subtitle!,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
+
       onTap: onTap,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     );
@@ -902,12 +983,10 @@ class _StatusChip extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.color,
-    this.onTap,
   });
   final IconData icon;
   final String label;
   final Color color;
-  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -922,24 +1001,11 @@ class _StatusChip extends StatelessWidget {
         ],
       ),
     );
-    if (onTap == null) {
-      return Container(
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: color.withValues(alpha: 0.35)),
-        ),
-        child: child,
-      );
-    }
+
     return Material(
       color: color.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(999),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
-        child: child,
-      ),
+      child: child,
     );
   }
 }
@@ -953,11 +1019,10 @@ class _BalanceCard extends StatelessWidget {
     required this.hint,
     required this.onTap,
     this.suffix,
-    this.showarrow,
   });
   final String label;
   final String value;
-  final bool? showarrow;
+
   final String? suffix;
   final String hint;
   final IconData icon;
@@ -983,12 +1048,6 @@ class _BalanceCard extends StatelessWidget {
                 children: [
                   Icon(icon, color: accent),
                   const Spacer(),
-                  (showarrow ?? true)
-                      ? Icon(
-                          Icons.chevron_right_rounded,
-                          color: colorScheme.onSurfaceVariant,
-                        )
-                      : Container(),
                 ],
               ),
               const SizedBox(height: 10),

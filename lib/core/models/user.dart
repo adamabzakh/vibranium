@@ -1,3 +1,5 @@
+import 'package:app/core/models/user_rank.dart';
+
 class GgLeapUser {
   final String uuid;
   final String username;
@@ -24,14 +26,11 @@ class GgLeapUser {
   final String photoUrl;
   final bool hasReminderNote;
   final UserGroupMembershipTrial? userGroupMembershipTrial;
-  String rank;
-  double? totalSpentLastMonth;
+  UserRank rank;
 
   GgLeapUser({
     required this.uuid,
     required this.username,
-    this.totalSpentLastMonth,
-
     required this.email,
     required this.firstName,
     required this.rank,
@@ -73,7 +72,18 @@ class GgLeapUser {
       email: json['Email'] ?? '',
       firstName: json['FirstName'] ?? '',
       lastName: json['LastName'] ?? '',
-      rank: 'Unknown',
+      rank: UserRank(
+        uuid: json['Rank']?['uuid']?.toString() ?? '',
+        rank: json['Rank']?['rank']?.toString() ?? 'Unranked',
+        reward: json['Rank']?['reward']?.toString() ?? 'None',
+        hasCollected: json['Rank']?['hasCollected']?.toString() ?? 'false',
+        pastCollections: json['Rank']?['pastCollections'] is List
+            ? List<dynamic>.from(json['Rank']!['pastCollections'])
+            : [],
+        totalSpent:
+            double.tryParse(json['Rank']?['totalSpent'].toString() ?? '0') ??
+            0.0,
+      ),
       centerUuid: json['CenterUuid'] ?? '',
       birthdate: json['Birthdate'] != null
           ? DateTime.tryParse(json['Birthdate'])

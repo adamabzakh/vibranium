@@ -397,7 +397,7 @@ class _TimeCheckoutScreenState extends State<_TimeCheckoutScreen> {
             onPressed: () async {
               final userProvider = context.read<UserProvider>();
 
-              await userProvider.addTime().then((c) async {
+              await userProvider.addTime(4).then((c) async {
                 if (!c) {
                   return;
                 }

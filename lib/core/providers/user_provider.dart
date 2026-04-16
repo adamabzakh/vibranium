@@ -5,6 +5,7 @@ import 'package:app/core/api/config.dart';
 import 'package:app/core/models/pc.dart';
 import 'package:app/core/models/session.dart';
 import 'package:app/core/models/user.dart';
+import 'package:app/core/models/user_rank.dart';
 import 'package:app/core/models/user_time.dart';
 import 'package:app/core/providers/pc_provider.dart';
 
@@ -84,10 +85,12 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> addTime() async {
+  Future<bool> addTime(prize) async {
+    isLoading = true;
+    notifyListeners();
     final String url = '${ApiConfig.apiBaseUrl}/users/add-play-time';
     String correlationId = Uuid().v4();
-    print({"Uuid": user!.uuid, "Seconds": 14400, "PaymentMethod": "Cash"});
+    final prizeInSeconds = prize * 3600;
     try {
       final response = await http.post(
         Uri.parse(url),
@@ -98,8 +101,8 @@ class UserProvider extends ChangeNotifier {
         },
         body: jsonEncode({
           "Uuid": user!.uuid,
-          "Seconds": 14400,
-          "PaymentMethod": "Cash",
+          "Seconds": prizeInSeconds,
+          "PaymentMethod": "Balance",
         }),
       );
 
@@ -114,13 +117,19 @@ class UserProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
+        isLoading = false;
+        notifyListeners();
         return true;
       } else {
         print('Failed to add time: ${response.body}');
+        isLoading = false;
+        notifyListeners();
         return false;
       }
     } catch (e) {
       print('Error fetching time: $e');
+      isLoading = false;
+      notifyListeners();
       return false;
     }
   }
@@ -294,7 +303,15 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  void checkIfloggedIn() async {
+  void checkIfloggedIn(debug) async {
+    if (debug) {
+      final user = await getUserByUuid(
+        "6ea89252-77c4-48b0-be6f-b5c824eaec05",
+      ); //boubou
+      setUser(user);
+
+      return;
+    }
     SharedPreferences.getInstance().then((pref) async {
       final String? userName = pref.getString('userUsername');
 
@@ -517,15 +534,39 @@ class UserProvider extends ChangeNotifier {
     } else if (totalSpent >= 150) {
       return "Obsidian";
     } else if (totalSpent >= 100) {
-      return "Titanium";
+      return "Cobalt";
     } else if (totalSpent >= 50) {
       return "Unranked";
     } else {
-      return "Unranked";
+      return "None";
     }
   }
 
   Future<void> getUserRank() async {
+    final uri = Uri.https('vibraniumjobooking.com', '/api/user_manager.php');
+
+    final response = await http.post(
+      uri,
+      body: {'uuid': user!.uuid, 'action': "get_user"},
+    );
+
+    print(response.body);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final data = jsonDecode(response.body);
+
+      user!.rank = UserRank.fromJson(data['data']);
+      notifyListeners();
+    } else {
+      print('Error: ${response.statusCode}');
+      print('Body: ${response.body}');
+    }
+  }
+
+  Future<void> updateUserRank(isCollection) async {
+    print("Updating User Rank...");
+    isLoading = true;
+    notifyListeners();
     final uri = Uri.https(
       'api.ggleap.com',
       '/production/user_activity_graph_requests',
@@ -562,12 +603,79 @@ class UserProvider extends ChangeNotifier {
         0,
         (sum, item) => sum + (item as num).toDouble(),
       );
-      user!.totalSpentLastMonth = totalPays;
-      user!.rank = getRankName(totalPays);
+
+      String rank = getRankName(totalPays);
+      user!.rank = UserRank(
+        uuid: user!.rank.uuid,
+        rank: rank,
+        reward: (rank == "VIBE: Eternal")
+            ? "10"
+            : (rank == "Obsidian")
+            ? "7"
+            : (rank == "Cobalt")
+            ? "5"
+            : "0",
+        hasCollected: isCollection ? "true" : "false",
+        pastCollections: user!.rank.pastCollections,
+        totalSpent: totalPays,
+      );
+
+      notifyListeners();
+
+      await updateUserOld(
+        uuid: user!.uuid,
+        rank: user!.rank.rank,
+        reward: user!.rank.reward,
+        hasCollected: user!.rank.hasCollected,
+        totalSpent: user!.rank.totalSpent,
+      );
+      isLoading = true;
+
       notifyListeners();
     } else {
+      isLoading = true;
+      notifyListeners();
       print('Error: ${response.statusCode}');
       print('Body: ${response.body}');
+    }
+  }
+
+  Future<void> updateUserOld({
+    required String uuid,
+    String? rank,
+    String? reward,
+    String? hasCollected,
+    double? totalSpent,
+    String? newCollection,
+  }) async {
+    final Map<String, String> body = {'action': 'update_user', 'uuid': uuid};
+
+    if (rank != null) body['rank'] = rank;
+    if (reward != null) body['reward'] = reward;
+    if (hasCollected != null) body['hasCollected'] = hasCollected;
+    if (totalSpent != null) body['totalSpent'] = totalSpent.toString();
+    if (newCollection != null) body['newCollection'] = newCollection;
+
+    final response = await http.post(
+      Uri.parse('https://vibraniumjobooking.com/api/user_manager.php'),
+      body: body,
+    );
+    final data = jsonDecode(response.body);
+
+    print(data);
+
+    if (response.statusCode == 200 && data['success'] == true) {
+      return data['message'] ?? 'Updated successfully';
+    } else {
+      await getUserRank();
+
+      await updateUserOld(
+        uuid: user!.uuid,
+        rank: user!.rank.rank,
+        reward: user!.rank.reward,
+        hasCollected: user!.rank.hasCollected,
+        totalSpent: user!.rank.totalSpent,
+      );
     }
   }
 
@@ -625,6 +733,10 @@ class UserProvider extends ChangeNotifier {
       print('Error fetching sessions: $e');
       throw Exception('Error fetching sessions: $e');
     }
+  }
+
+  Future<void> collectReward() async {
+    await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
   }
 }
 

@@ -32,8 +32,8 @@ class _SplashScreenState extends State<SplashScreen> {
     userProvider.controller
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..enableZoom(false);
-
-    userProvider.checkIfloggedIn();
+    //TODO : change to not debug
+    userProvider.checkIfloggedIn(true);
 
     Future.delayed(const Duration(seconds: 4), () {
       Navigator.of(context).pushReplacement(
