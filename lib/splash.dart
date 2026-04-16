@@ -2,6 +2,7 @@ import 'package:app/core/providers/user_provider.dart';
 import 'package:app/core/routing/vibranium_route.dart';
 import 'package:app/screens/auth/login_screen.dart';
 import 'package:app/screens/home/home_screen.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
@@ -32,8 +33,7 @@ class _SplashScreenState extends State<SplashScreen> {
     userProvider.controller
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..enableZoom(false);
-    //TODO : change to not debug
-    userProvider.checkIfloggedIn(true);
+    userProvider.checkIfloggedIn(kDebugMode);
 
     Future.delayed(const Duration(seconds: 4), () {
       Navigator.of(context).pushReplacement(

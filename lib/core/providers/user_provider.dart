@@ -449,7 +449,12 @@ class UserProvider extends ChangeNotifier {
 
         // API Change Detection: Verify if the 'Jwt' token still exists in the response
         bool apiChanged = !data.containsKey('Jwt');
-
+        if (apiChanged) {
+          print(
+            "API response structure has changed. 'Jwt' token not found in the response.",
+          );
+          return false;
+        }
         return true;
       } else {
         return false;

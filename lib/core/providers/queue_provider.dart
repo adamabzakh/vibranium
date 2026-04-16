@@ -8,7 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 class QueueProvider extends ChangeNotifier {
   static const String _baseUrl = "https://vibraniumjobooking.com/api";
   bool _isLoading = false;
-  Map<String, dynamic> _laneStats = {};
+  Map<String, dynamic> laneStats = {};
   List<dynamic> _userQueues = [];
   List<dynamic> _fullWaitingList = [];
   Map<String, dynamic>? _bestPosition;
@@ -27,7 +27,7 @@ class QueueProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         final res = jsonDecode(response.body);
         if (res['success'] == true) {
-          _laneStats = res['global_stats'] ?? {};
+          laneStats = res['global_stats'] ?? {};
           _userQueues = res['user_queues'] ?? [];
           _fullWaitingList = res['full_queue'] ?? [];
           _bestPosition = res['best_position'];

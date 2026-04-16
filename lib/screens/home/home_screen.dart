@@ -15,6 +15,7 @@ import 'package:app/screens/points/points_screen.dart';
 import 'package:app/screens/tournaments/tournaments_screen.dart';
 import 'package:app/screens/waiting_list/waiting_list.dart';
 import 'package:app/screens/wallet/time_balance_screen.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -61,7 +62,9 @@ class _HomeScreenState extends State<HomeScreen> {
     await userProvider.updateUserRank();
     await userProvider.getUserRank();
 
-    print("Collection status : " + userProvider.user!.rank.hasCollected);
+    if (kDebugMode) {
+      print("Collection status : ${userProvider.user!.rank.hasCollected}");
+    }
 
     setState(() {
       isLoading = false;
@@ -632,6 +635,7 @@ class _VibraniumVisaCardState extends State<VibraniumVisaCard> {
                             setState(() {
                               userProvider.user!.rank.hasCollected = "true";
                               userProvider.isLoading = true;
+                              // ignore: invalid_use_of_visible_for_testing_member, invalid_use_of_protected_member
                               userProvider.notifyListeners();
                             });
                             await userProvider.addTime(
@@ -647,6 +651,7 @@ class _VibraniumVisaCardState extends State<VibraniumVisaCard> {
                             );
                             setState(() {
                               userProvider.isLoading = false;
+                              // ignore: invalid_use_of_visible_for_testing_member, invalid_use_of_protected_member
                               userProvider.notifyListeners();
                             });
                           },
