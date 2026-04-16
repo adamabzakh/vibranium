@@ -17,7 +17,6 @@ import 'package:http/http.dart' as http;
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 
 class UserProvider extends ChangeNotifier {
   GgLeapUser? _user;
@@ -29,9 +28,6 @@ class UserProvider extends ChangeNotifier {
   List<GgSession> userSesstions = [];
   List<UserTime> userTime = [];
   GgMachine? currentBookedPc;
-
-  WebViewController controller = WebViewController();
-  Completer<void>? _pageLoadedCompleter;
 
   Future<void> getCurrectLoggedingPC(PcProvider pcProvider) async {
     if (pcProvider.pcs.isEmpty) {
@@ -359,23 +355,6 @@ class UserProvider extends ChangeNotifier {
       print("error login inValid");
       return false;
     }
-  }
-
-  void automationService() {
-    controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onPageFinished: (String url) {
-            // This fires the moment the browser finish loading the HTML
-            if (_pageLoadedCompleter != null &&
-                !_pageLoadedCompleter!.isCompleted) {
-              _pageLoadedCompleter!.complete();
-            }
-          },
-        ),
-      );
-    notifyListeners();
   }
 
   Future<String> resetPassword(String userName) async {

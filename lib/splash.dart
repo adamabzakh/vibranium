@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 
 String heroTag = "logo";
 
@@ -30,9 +29,6 @@ class _SplashScreenState extends State<SplashScreen> {
       });
     });
     final userProvider = context.read<UserProvider>();
-    userProvider.controller
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..enableZoom(false);
     userProvider.checkIfloggedIn(kDebugMode);
 
     Future.delayed(const Duration(seconds: 4), () {
