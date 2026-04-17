@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.vibranium.app"
+    namespace = "com.example.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 

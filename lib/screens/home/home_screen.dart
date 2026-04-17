@@ -59,6 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     await userProvider.getCurrectLoggedingPC(pcProvider);
     await pcProvider.fetchConsoles();
+    print("Collection status : ${userProvider.user!.rank.hasCollected}");
     await userProvider.updateUserRank();
     await userProvider.getUserRank();
 
@@ -106,8 +107,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             Icons.menu_rounded,
                             color: colorScheme.onSurface,
                           ),
-                          onPressed: () =>
-                              Scaffold.of(scaffoldContext).openDrawer(),
+                          onPressed: () {
+                            Scaffold.of(scaffoldContext).openDrawer();
+                          },
                         ),
                         actions: [
                           Padding(
@@ -167,7 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               Image.asset(
                                 _kLogoAsset,
-                                height: 128,
+                                height: 168,
                                 fit: BoxFit.contain,
                                 errorBuilder: (_, __, ___) => Icon(
                                   Icons.shield_outlined,
@@ -184,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Vibranium E-sports',
+                                'Vibranium E-Sports',
                                 style: theme.textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: -0.6,
@@ -632,28 +634,22 @@ class _VibraniumVisaCardState extends State<VibraniumVisaCard> {
                           userProvider.user!.rank.rank != "Unranked")
                       ? ElevatedButton(
                           onPressed: () async {
-                            setState(() {
-                              userProvider.user!.rank.hasCollected = "true";
-                              userProvider.isLoading = true;
-                              // ignore: invalid_use_of_visible_for_testing_member, invalid_use_of_protected_member
-                              userProvider.notifyListeners();
-                            });
+                            userProvider.initLoad();
                             await userProvider.addTime(
                               prizeOld: int.parse(
                                 userProvider.user!.rank.reward,
                               ),
                             );
-                            await userProvider.updateUserRank();
+                            await userProvider.updateUserRank(
+                              isUpdatingCollection: true,
+                            );
                             userProvider.setUser(
                               await userProvider.getUserByUuid(
                                 userProvider.user!.uuid,
                               ),
                             );
-                            setState(() {
-                              userProvider.isLoading = false;
-                              // ignore: invalid_use_of_visible_for_testing_member, invalid_use_of_protected_member
-                              userProvider.notifyListeners();
-                            });
+                            await userProvider.getUserRank();
+                            userProvider.initLoad();
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: themeColor,
@@ -662,7 +658,7 @@ class _VibraniumVisaCardState extends State<VibraniumVisaCard> {
                             ),
                           ),
                           child: Text(
-                            'Collect your ${userProvider.user!.rank.reward} Hours reward',
+                            'Collect your ${userProvider.user!.rank.reward} Hours Weekly reward',
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w500,

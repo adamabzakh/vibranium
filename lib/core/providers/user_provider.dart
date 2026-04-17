@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:app/core/api/config.dart';
 import 'package:app/core/models/pc.dart';
@@ -12,6 +11,7 @@ import 'package:app/core/providers/pc_provider.dart';
 
 import 'package:app/main.dart';
 import 'package:app/screens/book_pc/book_pc_screen.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -82,13 +82,57 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> deleteAcc() async {
+    final String url =
+        '${ApiConfig.apiBaseUrl}/users/delete?Uuid=${user!.uuid}';
+
+    try {
+      final response = await http.delete(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $currentJWT',
+        },
+      );
+
+      ApiConfig.printCurl(
+        method: 'GET',
+        url: Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $currentJWT',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        print("karam account deleted");
+
+        notifyListeners();
+      } else {
+        print('Failed to get user sessions: ${response.body}');
+        throw Exception('Failed to get sessions: ${response.body}');
+      }
+    } catch (e) {
+      print('Error fetching sessions: $e');
+      throw Exception('Error fetching sessions: $e');
+    }
+  }
+
   Future<bool> addTime({int? prizeOld}) async {
-    if (prizeOld == null) {}
-    final random = Random().nextInt(500) + 100;
-    final prize = (prizeOld! / 3600).toInt() + random;
+    int prize = 0;
+    if (prizeOld == null) {
+      prize = 4;
+    } else {
+      prize = prizeOld;
+    }
 
     isLoading = true;
     notifyListeners();
+
+    // if (kDebugMode) {
+    //   print("debug mode: skipping addTime API call");
+    //   return true;
+    // }
     final String url = '${ApiConfig.apiBaseUrl}/users/add-play-time';
     String correlationId = Uuid().v4();
     final prizeInSeconds = prize * 3600;
@@ -207,7 +251,7 @@ class UserProvider extends ChangeNotifier {
           return;
         }
 
-        user!.timeRemaining = remainingTime.toInt();
+        user!.timeRemaining = remainingTime.toInt() + user!.timeRemaining;
 
         notifyListeners();
       } else {
@@ -552,7 +596,17 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateUserRank() async {
+  void updateCollectionStatus(bool hasCollected) {
+    user!.rank.hasCollected = hasCollected ? "true" : "false";
+    notifyListeners();
+  }
+
+  void initLoad() {
+    isLoading = !isLoading;
+    notifyListeners();
+  }
+
+  Future<void> updateUserRank({isUpdatingCollection}) async {
     print("Updating User Rank...");
     isLoading = true;
     notifyListeners();
@@ -593,7 +647,9 @@ class UserProvider extends ChangeNotifier {
 
       final rank = getRankName(totalPays);
 
-      user!.rank = UserRank(
+      print("Sending hasCollected: ${user!.rank.hasCollected}");
+
+      await updateUserOld(
         uuid: user!.rank.uuid,
         rank: rank,
         reward: rank == "VIBE: Eternal"
@@ -603,21 +659,11 @@ class UserProvider extends ChangeNotifier {
             : rank == "Cobalt"
             ? "5"
             : "0",
-        hasCollected: user!.rank.hasCollected,
-        pastCollections: user!.rank.pastCollections,
+        hasCollected: (isUpdatingCollection ?? false)
+            ? "true"
+            : user!.rank.hasCollected,
+
         totalSpent: totalPays,
-      );
-
-      notifyListeners();
-
-      print("Sending hasCollected: ${user!.rank.hasCollected}");
-
-      await updateUserOld(
-        uuid: user!.uuid,
-        rank: user!.rank.rank,
-        reward: user!.rank.reward,
-        hasCollected: user!.rank.hasCollected,
-        totalSpent: user!.rank.totalSpent,
       );
     } catch (e) {
       print("updateUserRank error: $e");
@@ -718,8 +764,8 @@ class UserProvider extends ChangeNotifier {
     } catch (e) {
       print('Error fetching sessions: $e');
       isLoading = false;
+      userSesstions = [];
       notifyListeners();
-      throw Exception('Error fetching sessions: $e');
     }
   }
 

@@ -40,20 +40,6 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
     super.dispose();
   }
 
-  Future<void> _pickProfileImage() async {
-    final picker = ImagePicker();
-    final file = await picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 1024,
-      maxHeight: 1024,
-      imageQuality: 88,
-    );
-    if (file == null) return;
-    final bytes = await file.readAsBytes();
-    if (!mounted) return;
-    setState(() => _profileImageBytes = bytes);
-  }
-
   Future<void> _pickDateOfBirth() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
@@ -193,39 +179,8 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  'Profile image',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
+                const SizedBox(height: 44),
                 const SizedBox(height: 12),
-                Center(
-                  child: Material(
-                    color: colorScheme.surfaceContainerHighest,
-                    shape: const CircleBorder(),
-                    clipBehavior: Clip.antiAlias,
-                    child: InkWell(
-                      onTap: _pickProfileImage,
-                      child: SizedBox(
-                        width: 112,
-                        height: 112,
-                        child: _profileImageBytes != null
-                            ? Image.memory(
-                                _profileImageBytes!,
-                                fit: BoxFit.cover,
-                              )
-                            : Icon(
-                                Icons.add_a_photo_outlined,
-                                size: 40,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
                 TextFormField(
                   controller: _firstNameController,
                   decoration: const InputDecoration(

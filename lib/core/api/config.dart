@@ -33,9 +33,5 @@ class ApiConfig {
       bodyString = bodyString.replaceAll("'", "'\\''");
       curl += " \\\n  --data '$bodyString'";
     }
-
-    print("\n--- GENERATED cURL ---");
-    print(curl);
-    print("----------------------\n");
   }
 }

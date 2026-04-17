@@ -209,7 +209,22 @@ class _AppVersionGateState extends State<AppVersionGate> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const _VersionLoadingScreen();
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Hero(
+            tag: heroTag,
+            child: SizedBox(
+              width: 200,
+              height: 200,
+              child: Image.asset(
+                'assets/branding/vibranium_logo.png',
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ),
+      );
     }
 
     if (_mustUpdate) {
