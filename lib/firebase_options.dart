@@ -51,7 +51,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBHCYfHH4NOPjjEMjEch9tjDrZ1bMSCMEc',
-    appId: '1:705437267760:android:c3e04a5bedfdad82c23af5',
+    appId: '1:705437267760:android:9130ef23840aa346c23af5',
     messagingSenderId: '705437267760',
     projectId: 'vibranium-app-bd6c5',
     storageBucket: 'vibranium-app-bd6c5.firebasestorage.app',
@@ -59,10 +59,10 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyDIwIM2RcWqyvjduo2dC3XBEVouLDZpe_0',
-    appId: '1:705437267760:ios:6bd8908c05e7c3e8c23af5',
+    appId: '1:705437267760:ios:0fe22bb62d24ab57c23af5',
     messagingSenderId: '705437267760',
     projectId: 'vibranium-app-bd6c5',
     storageBucket: 'vibranium-app-bd6c5.firebasestorage.app',
-    iosBundleId: 'com.vibranium.app',
+    iosBundleId: 'com.vibraniumesports.app',
   );
 }
