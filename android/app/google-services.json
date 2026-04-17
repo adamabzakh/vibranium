@@ -9,7 +9,26 @@
       "client_info": {
         "mobilesdk_app_id": "1:705437267760:android:c3e04a5bedfdad82c23af5",
         "android_client_info": {
-          "package_name": "com.example.app"
+          "package_name": "com.vibranium.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHCYfHH4NOPjjEMjEch9tjDrZ1bMSCMEc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:705437267760:android:ab3590ff48b69642c23af5",
+        "android_client_info": {
+          "package_name": "com.vibranium.app"
         }
       },
       "oauth_client": [],

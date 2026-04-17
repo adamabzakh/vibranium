@@ -19,7 +19,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     final userProvider = context.read<UserProvider>();
-    userProvider.checkIfloggedIn(true);
+    userProvider.checkIfloggedIn(false);
     Future.delayed(const Duration(milliseconds: 1000), () {
       Navigator.of(context).pushReplacement(
         vibraniumPageRoute(

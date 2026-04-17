@@ -63,6 +63,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '705437267760',
     projectId: 'vibranium-app-bd6c5',
     storageBucket: 'vibranium-app-bd6c5.firebasestorage.app',
-    iosBundleId: 'com.example.app',
+    iosBundleId: 'com.vibranium.app',
   );
 }

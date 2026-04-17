@@ -185,6 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                               const SizedBox(height: 4),
+
                               Text(
                                 'Vibranium E-Sports',
                                 style: theme.textTheme.headlineSmall?.copyWith(
