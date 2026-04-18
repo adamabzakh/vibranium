@@ -99,4 +99,56 @@ class QueueProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<bool> exitWaitingList(String uuid) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // 1. Check/Request Permissions
+      var status = await Permission.notification.status;
+      if (status.isDenied || status.isPermanentlyDenied) {
+        await Permission.notification.request();
+      }
+
+      // 2. Get the Token
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      debugPrint("Vibranium Debug: FCM Token retrieved: $fcmToken");
+
+      // 3. Perform the Request
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/remove_queue.php'),
+            body: jsonEncode({'user_uuid': uuid}),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      // --- DEBUGGING BLOCK START ---
+      debugPrint("Vibranium Debug: Status Code: ${response.statusCode}");
+      debugPrint("Vibranium Debug: Raw Server Output: ${response.body}");
+      // --- DEBUGGING BLOCK END ---
+
+      if (response.statusCode == 200) {
+        final res = jsonDecode(response.body);
+        if (res['success'] == true) {
+          await updateQueueStats(uuid);
+          return true;
+        } else {
+          debugPrint("Vibranium Logic Error: ${res['message']}");
+        }
+      } else if (response.statusCode == 500) {
+        debugPrint(
+          "Vibranium Server Error: The server crashed. Check the PHP raw output printed above.",
+        );
+      }
+
+      return false;
+    } catch (e) {
+      debugPrint("Vibranium Connection Error: $e");
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

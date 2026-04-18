@@ -43,10 +43,12 @@ class _WaitingListScreenState extends State<WaitingListScreen> {
     }
   }
 
+  bool isLoading = false;
+
   @override
   Widget build(BuildContext context) {
     final qp = context.watch<QueueProvider>();
-    final up = context.read<UserProvider>();
+    final up = context.watch<UserProvider>();
     bool inQueue = qp.bestPosition != null;
     final allWaitingUsers = qp.fullWaitingList;
 
@@ -55,6 +57,16 @@ class _WaitingListScreenState extends State<WaitingListScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          (inQueue)
+              ? IconButton(
+                  onPressed: () {
+                    qp.exitWaitingList(up.user!.uuid);
+                  },
+                  icon: Icon(Icons.exit_to_app, color: Colors.red),
+                )
+              : Container(),
+        ],
         title: Text(
           "Waiting list",
           style: TextStyle(
@@ -66,280 +78,300 @@ class _WaitingListScreenState extends State<WaitingListScreen> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 20),
-
-            // --- BIG COUNTER SECTION ---
-            Center(
+      body: (qp.isLoading)
+          ? Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    inQueue
-                        ? "${qp.bestPosition?['in_front']}"
-                        : "${selectedLanes.length}",
-                    style: TextStyle(
-                      fontSize: 100,
-                      height: 1,
-                      fontWeight: FontWeight.w500,
-                      color: inQueue ? accentCyan : Colors.white10,
-                      shadows: inQueue
-                          ? [
-                              Shadow(
-                                blurRadius: 25,
-                                color: accentCyan.withOpacity(0.6),
+                  const SizedBox(height: 20),
+
+                  // --- BIG COUNTER SECTION ---
+                  Center(
+                    child: Column(
+                      children: [
+                        Text(
+                          inQueue
+                              ? "${qp.bestPosition?['in_front']}"
+                              : "${selectedLanes.length}",
+                          style: TextStyle(
+                            fontSize: 100,
+                            height: 1,
+                            fontWeight: FontWeight.w500,
+                            color: inQueue ? accentCyan : Colors.white10,
+                            shadows: inQueue
+                                ? [
+                                    Shadow(
+                                      blurRadius: 25,
+                                      color: accentCyan.withOpacity(0.6),
+                                    ),
+                                  ]
+                                : [],
+                          ),
+                        ),
+                        Text(
+                          inQueue ? "PEOPLE IN FRONT" : "TYPES SELECTED",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 4,
+                            color: Colors.white54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 50),
+
+                  // --- SELECTION VIEW (User not in queue) ---
+                  if (!inQueue) ...[
+                    Text(
+                      "SELECT PC TYPES",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(height: 3, width: 60, color: Colors.white),
+                    const SizedBox(height: 25),
+
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      childAspectRatio: 2.2,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      children: ['normal', 'stage', 'vip', 'master'].map((id) {
+                        bool sel = selectedLanes.contains(id);
+                        return InkWell(
+                          onTap: () => setState(
+                            () => sel
+                                ? selectedLanes.remove(id)
+                                : selectedLanes.add(id),
+                          ),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            decoration: BoxDecoration(
+                              color: sel
+                                  ? accentCyan.withOpacity(0.1)
+                                  : cardDark,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: sel ? accentCyan : Colors.white10,
+                                width: 2,
                               ),
-                            ]
-                          : [],
+                            ),
+                            child: Center(
+                              child: Text(
+                                id.toUpperCase(),
+                                style: TextStyle(
+                                  color: sel ? accentCyan : Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
-                  ),
-                  Text(
-                    inQueue ? "PEOPLE IN FRONT" : "TYPES SELECTED",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 4,
-                      color: Colors.white54,
+
+                    const SizedBox(height: 20),
+
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: () => setState(
+                          () => selectedLanes = {
+                            'normal',
+                            'stage',
+                            'vip',
+                            'master',
+                          },
+                        ),
+                        icon: Icon(Icons.bolt, color: accentCyan, size: 18),
+                        label: Text(
+                          "SELECT ANY AVAILABLE PC",
+                          style: TextStyle(
+                            color: accentCyan,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+
+                    const SizedBox(height: 20),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 60,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: accentMagenta,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          elevation: 10,
+                        ),
+                        onPressed: selectedLanes.isEmpty || qp.isLoading
+                            ? null
+                            : () async {
+                                String lanesCsv = selectedLanes.join(',');
+
+                                bool success = await qp.joinWaitingList(
+                                  up.user!.uuid,
+                                  up.user!.username,
+                                  lanesCsv,
+                                );
+                                if (success)
+                                  setState(() => selectedLanes.clear());
+                              },
+                        child: qp.isLoading
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                            : const Text(
+                                "JOIN WAITING LIST",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 16,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ]
+                  // --- LIVE DASHBOARD VIEW (User is in queue) ---
+                  else ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "LIVE WAITING LIST",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 2,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              height: 4,
+                              width: 40,
+                              color: Colors.white,
+                            ),
+                          ],
+                        ),
+                        Text(
+                          "${allWaitingUsers.length} TOTAL",
+                          style: const TextStyle(
+                            color: Colors.white24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 25),
+
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: allWaitingUsers.length,
+                      itemBuilder: (context, index) {
+                        final person = allWaitingUsers[index];
+                        bool isMe = person['user_uuid'] == up.user!.uuid;
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: cardDark,
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border(
+                              left: BorderSide(
+                                color: isMe
+                                    ? accentGreen
+                                    : accentMagenta.withOpacity(0.2),
+                                width: 8,
+                              ),
+                            ),
+                            boxShadow: isMe
+                                ? [
+                                    BoxShadow(
+                                      color: accentGreen.withOpacity(0.1),
+                                      blurRadius: 15,
+                                    ),
+                                  ]
+                                : [],
+                          ),
+                          child: Row(
+                            children: [
+                              Text(
+                                "${index + 1}",
+                                style: TextStyle(
+                                  color: isMe ? accentGreen : Colors.white12,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(width: 20),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      person['username']
+                                          .toString()
+                                          .toUpperCase(),
+                                      style: TextStyle(
+                                        color: isMe
+                                            ? Colors.white
+                                            : Colors.white70,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      person['queue_type']
+                                          .toString()
+                                          .replaceAll(',', ' • ')
+                                          .toUpperCase(),
+                                      style: TextStyle(
+                                        color: isMe
+                                            ? accentGreen.withOpacity(0.7)
+                                            : Colors.white24,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (isMe)
+                                Icon(Icons.stars, color: accentGreen, size: 24),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                  const SizedBox(height: 60),
                 ],
               ),
             ),
-
-            const SizedBox(height: 50),
-
-            // --- SELECTION VIEW (User not in queue) ---
-            if (!inQueue) ...[
-              Text(
-                "SELECT PC TYPES",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Container(height: 3, width: 60, color: Colors.white),
-              const SizedBox(height: 25),
-
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                childAspectRatio: 2.2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                children: ['normal', 'stage', 'vip', 'master'].map((id) {
-                  bool sel = selectedLanes.contains(id);
-                  return InkWell(
-                    onTap: () => setState(
-                      () => sel
-                          ? selectedLanes.remove(id)
-                          : selectedLanes.add(id),
-                    ),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      decoration: BoxDecoration(
-                        color: sel ? accentCyan.withOpacity(0.1) : cardDark,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: sel ? accentCyan : Colors.white10,
-                          width: 2,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          id.toUpperCase(),
-                          style: TextStyle(
-                            color: sel ? accentCyan : Colors.white,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-
-              const SizedBox(height: 20),
-
-              Center(
-                child: TextButton.icon(
-                  onPressed: () => setState(
-                    () => selectedLanes = {'normal', 'stage', 'vip', 'master'},
-                  ),
-                  icon: Icon(Icons.bolt, color: accentCyan, size: 18),
-                  label: Text(
-                    "SELECT ANY AVAILABLE PC",
-                    style: TextStyle(
-                      color: accentCyan,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              SizedBox(
-                width: double.infinity,
-                height: 60,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: accentMagenta,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    elevation: 10,
-                  ),
-                  onPressed: selectedLanes.isEmpty || qp.isLoading
-                      ? null
-                      : () async {
-                          String lanesCsv = selectedLanes.join(',');
-
-                          bool success = await qp.joinWaitingList(
-                            up.user!.uuid,
-                            up.user!.username,
-                            lanesCsv,
-                          );
-                          if (success) setState(() => selectedLanes.clear());
-                        },
-                  child: qp.isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                          "JOIN WAITING LIST",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 16,
-                          ),
-                        ),
-                ),
-              ),
-            ]
-            // --- LIVE DASHBOARD VIEW (User is in queue) ---
-            else ...[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "LIVE WAITING LIST",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Container(height: 4, width: 40, color: Colors.white),
-                    ],
-                  ),
-                  Text(
-                    "${allWaitingUsers.length} TOTAL",
-                    style: const TextStyle(
-                      color: Colors.white24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 25),
-
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: allWaitingUsers.length,
-                itemBuilder: (context, index) {
-                  final person = allWaitingUsers[index];
-                  bool isMe = person['user_uuid'] == up.user!.uuid;
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: cardDark,
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border(
-                        left: BorderSide(
-                          color: isMe
-                              ? accentGreen
-                              : accentMagenta.withOpacity(0.2),
-                          width: 8,
-                        ),
-                      ),
-                      boxShadow: isMe
-                          ? [
-                              BoxShadow(
-                                color: accentGreen.withOpacity(0.1),
-                                blurRadius: 15,
-                              ),
-                            ]
-                          : [],
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          "${index + 1}",
-                          style: TextStyle(
-                            color: isMe ? accentGreen : Colors.white12,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(width: 20),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                person['username'].toString().toUpperCase(),
-                                style: TextStyle(
-                                  color: isMe ? Colors.white : Colors.white70,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                person['queue_type']
-                                    .toString()
-                                    .replaceAll(',', ' • ')
-                                    .toUpperCase(),
-                                style: TextStyle(
-                                  color: isMe
-                                      ? accentGreen.withOpacity(0.7)
-                                      : Colors.white24,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (isMe)
-                          Icon(Icons.stars, color: accentGreen, size: 24),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ],
-            const SizedBox(height: 60),
-          ],
-        ),
-      ),
     );
   }
 }
