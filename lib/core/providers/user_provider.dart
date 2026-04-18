@@ -11,9 +11,11 @@ import 'package:app/core/providers/pc_provider.dart';
 
 import 'package:app/main.dart';
 import 'package:app/screens/book_pc/book_pc_screen.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:permission_handler/permission_handler.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -79,6 +81,44 @@ class UserProvider extends ChangeNotifier {
       currentBookedPc = loggedinPC;
 
       notifyListeners();
+    }
+  }
+
+  Future<void> registerUser() async {
+    if (!(await Permission.notification.isGranted)) {
+      await Permission.notification.request();
+    }
+
+    // Replace with your actual domain
+    final url = Uri.parse(
+      'https://vibraniumjobooking.com/api/register_user.php',
+    );
+
+    try {
+      final fcm = await FirebaseMessaging.instance.getToken();
+
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'username': user!.username,
+          'uuid': user!.uuid,
+          'fcm_token': fcm,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        if (result['success']) {
+          print("User synced: ${result['message']}");
+        } else {
+          print("API Error: ${result['message']}");
+        }
+      } else {
+        print("Server responded with status: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Network error: $e");
     }
   }
 

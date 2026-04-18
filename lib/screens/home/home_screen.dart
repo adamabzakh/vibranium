@@ -62,6 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
     print("Collection status : ${userProvider.user!.rank.hasCollected}");
     await userProvider.updateUserRank();
     await userProvider.getUserRank();
+    await userProvider.registerUser();
 
     if (kDebugMode) {
       print("Collection status : ${userProvider.user!.rank.hasCollected}");
