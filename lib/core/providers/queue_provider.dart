@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -55,6 +56,22 @@ class QueueProvider extends ChangeNotifier {
       }
 
       // 2. Get the Token
+      if (Platform.isIOS) {
+        String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+        if (apnsToken == null) {
+          // If this is null, FCM won't work yet.
+          // Wait a second or retry.
+          await Future.delayed(Duration(seconds: 1));
+        }
+      }
+      if (Platform.isIOS) {
+        String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+        if (apnsToken == null) {
+          // If this is null, FCM won't work yet.
+          // Wait a second or retry.
+          await Future.delayed(Duration(seconds: 1));
+        }
+      }
       final fcmToken = await FirebaseMessaging.instance.getToken();
       debugPrint("Vibranium Debug: FCM Token retrieved: $fcmToken");
 
@@ -112,6 +129,14 @@ class QueueProvider extends ChangeNotifier {
       }
 
       // 2. Get the Token
+      if (Platform.isIOS) {
+        String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+        if (apnsToken == null) {
+          // If this is null, FCM won't work yet.
+          // Wait a second or retry.
+          await Future.delayed(Duration(seconds: 1));
+        }
+      }
       final fcmToken = await FirebaseMessaging.instance.getToken();
       debugPrint("Vibranium Debug: FCM Token retrieved: $fcmToken");
 

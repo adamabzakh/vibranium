@@ -4,6 +4,7 @@ import 'package:app/screens/home/home_screen.dart';
 import 'package:app/splash.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'create_user_screen.dart';
 import 'forgot_password_screen.dart';
@@ -51,6 +52,8 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
+
+  bool terms = false;
 
   @override
   Widget build(BuildContext context) {
@@ -130,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _passwordController,
                         obscureText: _obscurePassword,
                         textInputAction: TextInputAction.done,
-                        onFieldSubmitted: (_) => _onSignIn(),
+                        onFieldSubmitted: (_) => (terms) ? _onSignIn : null,
                         autofillHints: const [AutofillHints.password],
                         decoration: InputDecoration(
                           labelText: 'Password',
@@ -173,9 +176,36 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: const Text('Forgot password?'),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: terms,
+                            onChanged: (value) {
+                              setState(() {
+                                terms = value ?? false;
+                              });
+                            },
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              launchUrl(
+                                Uri.parse(
+                                  "https://vibraniumjobooking.com/terms.html",
+                                ),
+                              );
+                            },
+                            child: Text(
+                              "I agree to Terms & Conditions",
+                              style: TextStyle(color: Colors.blue),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+
                       FilledButton(
-                        onPressed: _onSignIn,
+                        onPressed: (terms) ? _onSignIn : null,
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(

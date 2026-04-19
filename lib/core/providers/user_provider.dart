@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:app/core/api/config.dart';
 import 'package:app/core/models/pc.dart';
@@ -95,7 +96,17 @@ class UserProvider extends ChangeNotifier {
     );
 
     try {
+      if (Platform.isIOS) {
+        String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+        if (apnsToken == null) {
+          // If this is null, FCM won't work yet.
+          // Wait a second or retry.
+          await Future.delayed(Duration(seconds: 1));
+        }
+      }
       final fcm = await FirebaseMessaging.instance.getToken();
+
+      print("Device FCM : $fcm");
 
       final response = await http.post(
         url,

@@ -825,15 +825,16 @@ class _VibraniumDrawer extends StatelessWidget {
             Material(
               color: VibraniumColors.surfaceContainer,
               child: SizedBox(
-                height: 168,
+                height: 240,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Image.asset(
                         _kLogoAsset,
-                        height: 56,
+                        height: 100,
                         fit: BoxFit.contain,
                         errorBuilder: (_, __, ___) => Icon(
                           Icons.shield_outlined,
@@ -841,16 +842,34 @@ class _VibraniumDrawer extends StatelessWidget {
                           size: 48,
                         ),
                       ),
-                      const Spacer(),
                       Text(
-                        user!.firstName,
+                        user!.username.toUpperCase(),
+                        maxLines: 1,
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        user.email,
+                        user!.firstName + " " + user.lastName,
+                        maxLines: 1,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const Spacer(),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Phone : ${user.phone}",
+                        maxLines: 1,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Email : ${user.email}",
+                        maxLines: 1,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),

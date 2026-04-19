@@ -6,6 +6,7 @@ import 'package:app/screens/home/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CreateUserScreen extends StatefulWidget {
   const CreateUserScreen({super.key});
@@ -91,7 +92,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   static bool _looksLikeEmail(String value) =>
       RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value.trim());
   static String _digitsOnly(String s) => s.replaceAll(RegExp(r'\D'), '');
-
+  bool terms = false;
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -230,9 +231,35 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Checkbox(
+                      value: terms,
+                      onChanged: (value) {
+                        setState(() {
+                          terms = value ?? false;
+                        });
+                      },
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        launchUrl(
+                          Uri.parse(
+                            "https://vibraniumjobooking.com/terms.html",
+                          ),
+                        );
+                      },
+                      child: Text(
+                        "I agree to Terms & Conditions",
+                        style: TextStyle(color: Colors.blue),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
                 FilledButton(
-                  onPressed: _onCreateAccount,
+                  onPressed: terms ? _onCreateAccount : null,
                   style: FilledButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
