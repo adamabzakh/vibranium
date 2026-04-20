@@ -9,6 +9,7 @@ import 'package:app/core/theme/vibranium_theme.dart';
 import 'package:app/screens/auth/login_screen.dart';
 import 'package:app/screens/book_pc/book_pc_screen.dart';
 import 'package:app/screens/events/events_screen.dart';
+import 'package:app/screens/home/meal_barcode.dart';
 import 'package:app/screens/home/rank.dart';
 import 'package:app/screens/lounge/lounge_screen.dart';
 import 'package:app/screens/points/points_screen.dart';
@@ -55,13 +56,13 @@ class _HomeScreenState extends State<HomeScreen> {
       await userProvider.getUserByUuid(userProvider.user!.uuid),
     );
 
+    await userProvider.getCurrectLoggedingPC(pcProvider);
     await queueProvider.updateQueueStats(userProvider.user!.uuid);
 
-    await userProvider.getCurrectLoggedingPC(pcProvider);
     await pcProvider.fetchConsoles();
     print("Collection status : ${userProvider.user!.rank.hasCollected}");
-    await userProvider.updateUserRank();
     await userProvider.getUserRank();
+    await userProvider.updateUserRank(isUpdatingCollection: false);
     await userProvider.registerUser();
 
     if (kDebugMode) {
@@ -240,7 +241,160 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                         sliver: SliverToBoxAdapter(
                           child: Column(
-                            children: [rankCard(userProvider.user!.rank)],
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              rankCard(userProvider.user!.rank),
+                              if (userProvider.user!.rank.rank.toUpperCase() ==
+                                      "VIBE: ETERNAL" &&
+                                  userProvider.user!.rank.remainMeals > 0)
+                                Container(
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(24),
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Colors.grey[900]!,
+                                        Colors.black,
+                                        Colors.black,
+                                      ],
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(
+                                          0xFF00E5FF,
+                                        ).withOpacity(0.2),
+                                        blurRadius: 25,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                    border: Border.all(
+                                      color: const Color(
+                                        0xFF00E5FF,
+                                      ).withOpacity(0.4),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 18,
+                                      horizontal: 28,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Eternal Member Special Benefits",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.purple,
+                                          ),
+                                        ),
+                                        SizedBox(height: 10),
+                                        Text(
+                                          "Remaining Meals: ${userProvider.user!.rank.remainMeals}",
+                                        ),
+                                        SizedBox(height: 10),
+                                        ElevatedButton(
+                                          style: ButtonStyle(
+                                            shape: MaterialStateProperty.all(
+                                              RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(9),
+                                              ),
+                                            ),
+                                            backgroundColor:
+                                                MaterialStateProperty.all(
+                                                  Colors.purple,
+                                                ),
+                                          ),
+                                          onPressed:
+                                              userProvider
+                                                      .user!
+                                                      .rank
+                                                      .remainMeals >
+                                                  0
+                                              ? () async {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (context) {
+                                                      return AlertDialog(
+                                                        title: Text(
+                                                          "Redeem Free Meal",
+                                                        ),
+                                                        content: Text(
+                                                          "Are you sure you want to redeem one of your free meals? You have ${userProvider.user!.rank.remainMeals} remaining.\nYou have to be at the Vibe Lounge counter to redeem, Other wise you will lose the meal without getting the reward.",
+                                                        ),
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed: () =>
+                                                                Navigator.of(
+                                                                  context,
+                                                                ).pop(),
+                                                            child: Text(
+                                                              "Cancel",
+                                                            ),
+                                                          ),
+                                                          ElevatedButton(
+                                                            onPressed:
+                                                                (userProvider
+                                                                    .isLoading)
+                                                                ? null
+                                                                : () async {
+                                                                    await userProvider
+                                                                        .redeemFreeMeal(
+                                                                          context,
+                                                                        );
+                                                                    Navigator.of(
+                                                                      context,
+                                                                    ).pop();
+                                                                    await Navigator.of(
+                                                                          context,
+                                                                        )
+                                                                        .push<
+                                                                          void
+                                                                        >(
+                                                                          vibraniumPageRoute(
+                                                                            MemberBarCodeScreen(
+                                                                              userRank: userProvider.user!.rank.rank,
+                                                                              userUuid: userProvider.user!.uuid,
+                                                                            ),
+                                                                          ),
+                                                                        )
+                                                                        .then(
+                                                                          (
+                                                                            _,
+                                                                          ) => setState(
+                                                                            () {
+                                                                              init();
+                                                                            },
+                                                                          ),
+                                                                        );
+                                                                  },
+                                                            child: Text(
+                                                              "Redeem",
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      );
+                                                    },
+                                                  );
+                                                }
+                                              : null,
+                                          child: Text(
+                                            "Redeem Free Meal",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                       ),
@@ -281,9 +435,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               Expanded(
                                 child: _BalanceCard(
                                   label: 'Waiting List',
-                                  value: queueProvider.userQueues.length
+                                  value: queueProvider.fullWaitingList.length
                                       .toString(),
-                                  suffix: 'Up front',
+                                  suffix: 'total in-line',
                                   hint: 'Add your self to queue',
                                   icon: Icons.format_list_numbered_rounded,
                                   accent: colorScheme.primary,
@@ -491,11 +645,11 @@ class _VibraniumVisaCardState extends State<VibraniumVisaCard> {
 
     final userProvider = context.read<UserProvider>();
 
-    if (widget.totalSpent >= 200) {
+    if (widget.totalSpent >= 250) {
       rankName = "VIBE: ETERNAL";
       themeColor = const Color(0xFF00E5FF); // Electric Blue
       progress = 1.0;
-      nextGoal = 200.0;
+      nextGoal = 250.0;
     } else if (widget.totalSpent >= 150) {
       rankName = "OBSIDIAN";
       themeColor = const Color(0xFF673AB7); // Purple
@@ -636,7 +790,9 @@ class _VibraniumVisaCardState extends State<VibraniumVisaCard> {
                           userProvider.user!.rank.rank != "Unranked")
                       ? ElevatedButton(
                           onPressed: () async {
-                            userProvider.initLoad();
+                            setState(() {
+                              userProvider.initLoad();
+                            });
                             await userProvider.addTime(
                               prizeOld: int.parse(
                                 userProvider.user!.rank.reward,
@@ -651,7 +807,9 @@ class _VibraniumVisaCardState extends State<VibraniumVisaCard> {
                               ),
                             );
                             await userProvider.getUserRank();
-                            userProvider.initLoad();
+                            setState(() {
+                              userProvider.initLoad();
+                            });
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: themeColor,
@@ -660,7 +818,7 @@ class _VibraniumVisaCardState extends State<VibraniumVisaCard> {
                             ),
                           ),
                           child: Text(
-                            'Collect your ${userProvider.user!.rank.reward} Hours Weekly reward',
+                            'Collect ${userProvider.user!.rank.reward} Hours reward',
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w500,

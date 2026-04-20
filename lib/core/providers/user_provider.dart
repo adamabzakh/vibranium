@@ -373,7 +373,8 @@ class UserProvider extends ChangeNotifier {
       notifyListeners();
     } else {
       print('Failed to get balance: ${response.body}');
-      throw Exception('Failed to get balance: ${response.body}');
+      user!.pointsBalance = 0.0;
+      notifyListeners();
     }
   }
 
@@ -613,7 +614,7 @@ class UserProvider extends ChangeNotifier {
   }
 
   String getRankName(double totalSpent) {
-    if (totalSpent >= 200) {
+    if (totalSpent >= 250) {
       return "VIBE: Eternal";
     } else if (totalSpent >= 150) {
       return "Obsidian";
@@ -701,7 +702,7 @@ class UserProvider extends ChangeNotifier {
       print("Sending hasCollected: ${user!.rank.hasCollected}");
 
       await updateUserOld(
-        uuid: user!.rank.uuid,
+        uuid: user!.uuid,
         rank: rank,
         reward: rank == "VIBE: Eternal"
             ? "10"
@@ -763,7 +764,7 @@ class UserProvider extends ChangeNotifier {
   }
 
   double getRankProgress(double totalSpent) {
-    if (totalSpent >= 200) return 1.0; // Max Rank
+    if (totalSpent >= 250) return 1.0; // Max Rank
 
     if (totalSpent >= 150) {
       // Progress between Obsidian (150) and VIB (200)
@@ -820,8 +821,27 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> collectReward() async {
-    await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
+  Future<void> redeemFreeMeal(context) async {
+    isLoading = true;
+    notifyListeners();
+    if (!(user!.rank.rank.toUpperCase() == "VIBE: ETERNAL")) return;
+
+    final response = await http.post(
+      Uri.parse('https://vibraniumjobooking.com/api/user_manager.php'),
+      body: {'action': 'update_meal', 'uuid': user!.uuid, 'amount': '-1'},
+    );
+
+    final data = jsonDecode(response.body);
+    if (data['success']) {
+      await updateUserRank(isUpdatingCollection: false);
+
+      isLoading = false;
+      notifyListeners();
+    } else {
+      isLoading = false;
+      notifyListeners();
+      print("Failed to redeem meal: ${data['message']}");
+    }
   }
 }
 

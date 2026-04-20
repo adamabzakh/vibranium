@@ -57,13 +57,22 @@ class _WaitingListScreenState extends State<WaitingListScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        toolbarHeight: 66,
         actions: [
           (inQueue)
-              ? IconButton(
-                  onPressed: () {
-                    qp.exitWaitingList(up.user!.uuid);
-                  },
-                  icon: Icon(Icons.exit_to_app, color: Colors.red),
+              ? Column(
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        qp.exitWaitingList(up.user!.uuid);
+                      },
+                      icon: Icon(Icons.exit_to_app, color: Colors.red),
+                    ),
+                    Text(
+                      "EXIT",
+                      style: TextStyle(color: Colors.red, fontSize: 12),
+                    ),
+                  ],
                 )
               : Container(),
         ],

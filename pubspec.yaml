@@ -1,7 +1,7 @@
 name: app
 description: "A new Flutter project."
 publish_to: 'none'
-version: 0.2.0+1
+version: 0.2.0+2
 
 environment:
   sdk: ^3.9.0-164.0.dev
@@ -18,12 +18,16 @@ dependencies:
   video_player:
   intl:
   firebase_core:
+  screen_protector:
   firebase_messaging:
   permission_handler: ^12.0.1
   lazy_load_scrollview: ^1.3.0
   ticketcher: ^1.1.0
+  firebase_in_app_messaging:
   package_info_plus: ^8.0.2
   url_launcher: ^6.3.0
+  firebase_app_installations:
+  barcode_widget:
 
 dev_dependencies:
   flutter_test:

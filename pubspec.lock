@@ -17,6 +17,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.13.0"
+  barcode:
+    dependency: transitive
+    description:
+      name: barcode
+      sha256: "7b6729c37e3b7f34233e2318d866e8c48ddb46c1f7ad01ff7bb2a8de1da2b9f4"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.9"
+  barcode_widget:
+    dependency: "direct main"
+    description:
+      name: barcode_widget
+      sha256: "6f2c5b08659b1a5f4d88d183e6007133ea2f96e50e7b8bb628f03266c3931427"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.4"
   boolean_selector:
     dependency: transitive
     description:
@@ -129,6 +145,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.9.3+5"
+  firebase_app_installations:
+    dependency: "direct main"
+    description:
+      name: firebase_app_installations
+      sha256: "9103cac19ec40561b49a023e8e583f007f77a499c2058f5a1d82ba480c2367d7"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.1"
+  firebase_app_installations_platform_interface:
+    dependency: transitive
+    description:
+      name: firebase_app_installations_platform_interface
+      sha256: "0811d37b91c992cc0c98200cca79652d0375a16c58b364a4db5601571c198ee5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.4+67"
+  firebase_app_installations_web:
+    dependency: transitive
+    description:
+      name: firebase_app_installations_web
+      sha256: "02f2a96e85581bd1f78319b503dc92c80afa1527cbc299c7c921995b75595bbd"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.7+4"
   firebase_core:
     dependency: "direct main"
     description:
@@ -153,6 +193,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.5.1"
+  firebase_in_app_messaging:
+    dependency: "direct main"
+    description:
+      name: firebase_in_app_messaging
+      sha256: "710992f41a2c4069c35b55c00e2278912c65f5280c8bebade145cbfe88e40616"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.9.1"
+  firebase_in_app_messaging_platform_interface:
+    dependency: transitive
+    description:
+      name: firebase_in_app_messaging_platform_interface
+      sha256: "2014bf9433ca5e8092403213d74fe35ed33547bff6f016c5aab0922a35fa1a90"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.5+19"
   firebase_messaging:
     dependency: "direct main"
     description:
@@ -536,6 +592,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.5+1"
+  qr:
+    dependency: transitive
+    description:
+      name: qr
+      sha256: "5a1d2586170e172b8a8c8470bbbffd5eb0cd38a66c0d77155ea138d3af3a4445"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.2"
+  screen_protector:
+    dependency: "direct main"
+    description:
+      name: screen_protector
+      sha256: "7f53d7a0c238a62dc970841fd13053f2b79f14b7f8d2c82a11fef65b066f42cd"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.5.1"
   shared_preferences:
     dependency: "direct main"
     description:

@@ -76,6 +76,9 @@ class GgLeapUser {
         uuid: json['Rank']?['uuid']?.toString() ?? '',
         rank: json['Rank']?['rank']?.toString() ?? 'Unranked',
         reward: json['Rank']?['reward']?.toString() ?? 'None',
+        remainMeals: json['Rank']?['remainMeals'] is int
+            ? json['Rank']!['remainMeals']
+            : int.tryParse(json['Rank']?['remainMeals'].toString() ?? '0') ?? 0,
         hasCollected: json['Rank']?['hasCollected']?.toString() ?? 'false',
         pastCollections: json['Rank']?['pastCollections'] is List
             ? List<dynamic>.from(json['Rank']!['pastCollections'])

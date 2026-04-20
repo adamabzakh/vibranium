@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:app/core/api/config.dart';
 import 'package:app/core/providers/pc_provider.dart';
@@ -7,6 +8,7 @@ import 'package:app/core/providers/queue_provider.dart';
 import 'package:app/core/providers/user_provider.dart';
 import 'package:app/core/theme/vibranium_theme.dart';
 import 'package:app/splash.dart';
+import 'package:firebase_app_installations/firebase_app_installations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -24,26 +26,67 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("Handling a background message: ${message.messageId}");
 }
 
+Future<void> printInstallationId() async {
+  try {
+    String id = await FirebaseInstallations.instance.getId();
+    print('Firebase Installation ID: $id');
+    // You can now show this in a Dialog or copy it to the clipboard
+  } catch (e) {
+    print('Error fetching Installation ID: $e');
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await Firebase.initializeApp();
 
-  await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+  // 1. Register background handler first
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+  // Add this right before runApp()
+  if (Platform.isIOS) {
+    await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: true,
+      provisional: false,
+      sound: true,
+    );
+  } else {
+    await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+  }
+
+  // 3. Configure foreground behavior
+  // DO NOT wrap this in an 'if' check for authorization status.
+  // Set it globally to ensure the OS knows how to handle incoming pokes.
+  await messaging.setForegroundNotificationPresentationOptions(
     alert: true,
     badge: true,
     sound: true,
   );
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
+  // Get token for debugging
+  String? token = await messaging.getToken();
+  print("FCM Token: $token");
+
+  await printInstallationId();
+
+  // Your GgLeap Logic
   try {
     await refreshGgLeapJwt();
-    print("Initial JWT fetched successfully.");
   } catch (e) {
-    print("Failed to fetch initial JWT: $e");
+    print("Initial JWT failed: $e");
   }
 
-  Timer.periodic(const Duration(minutes: 5), (timer) async {
+  Timer.periodic(const Duration(minutes: 7), (timer) async {
     try {
       await refreshGgLeapJwt();
       print("JWT refreshed successfully at ${DateTime.now()}");

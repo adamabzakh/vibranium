@@ -44,7 +44,7 @@ class _RanksSliderScreenState extends State<RanksSliderScreen> {
     RankInfo(
       name: "VIBE: Eternal",
       description:
-          "10 hours free every week until the end of the act , minimum spent 200Jds per act",
+          "10 hours & 2 meals free every week until the end of the act , minimum spent 250Jds per act",
       image: "assets/branding/vibe_eternal.png",
     ),
   ];

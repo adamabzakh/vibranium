@@ -1,22 +1,45 @@
 PODS:
   - Firebase/CoreOnly (12.9.0):
     - FirebaseCore (~> 12.9.0)
+  - Firebase/InAppMessaging (12.9.0):
+    - Firebase/CoreOnly
+    - FirebaseInAppMessaging (~> 12.9.0-beta)
+  - Firebase/Installations (12.9.0):
+    - Firebase/CoreOnly
+    - FirebaseInstallations (~> 12.9.0)
   - Firebase/Messaging (12.9.0):
     - Firebase/CoreOnly
     - FirebaseMessaging (~> 12.9.0)
+  - firebase_app_installations (0.4.1):
+    - Firebase/Installations (= 12.9.0)
+    - firebase_core
+    - Flutter
   - firebase_core (4.6.0):
     - Firebase/CoreOnly (= 12.9.0)
+    - Flutter
+  - firebase_in_app_messaging (0.9.1):
+    - Firebase/InAppMessaging (= 12.9.0)
+    - firebase_core
     - Flutter
   - firebase_messaging (16.1.3):
     - Firebase/Messaging (= 12.9.0)
     - firebase_core
     - Flutter
+  - FirebaseABTesting (12.9.0):
+    - FirebaseCore (~> 12.9.0)
   - FirebaseCore (12.9.0):
     - FirebaseCoreInternal (~> 12.9.0)
     - GoogleUtilities/Environment (~> 8.1)
     - GoogleUtilities/Logger (~> 8.1)
   - FirebaseCoreInternal (12.9.0):
     - "GoogleUtilities/NSData+zlib (~> 8.1)"
+  - FirebaseInAppMessaging (12.9.0-beta):
+    - FirebaseABTesting (~> 12.9.0)
+    - FirebaseCore (~> 12.9.0)
+    - FirebaseInstallations (~> 12.9.0)
+    - GoogleUtilities/Environment (~> 8.1)
+    - GoogleUtilities/UserDefaults (~> 8.1)
+    - nanopb (~> 3.30910.0)
   - FirebaseInstallations (12.9.0):
     - FirebaseCore (~> 12.9.0)
     - GoogleUtilities/Environment (~> 8.1)
@@ -74,6 +97,10 @@ PODS:
   - permission_handler_apple (9.3.0):
     - Flutter
   - PromisesObjC (2.4.0)
+  - screen_protector (1.5.1):
+    - Flutter
+    - ScreenProtectorKit (= 1.5.1)
+  - ScreenProtectorKit (1.5.1)
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -84,13 +111,16 @@ PODS:
     - FlutterMacOS
 
 DEPENDENCIES:
+  - firebase_app_installations (from `.symlinks/plugins/firebase_app_installations/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
+  - firebase_in_app_messaging (from `.symlinks/plugins/firebase_in_app_messaging/ios`)
   - firebase_messaging (from `.symlinks/plugins/firebase_messaging/ios`)
   - Flutter (from `Flutter`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
+  - screen_protector (from `.symlinks/plugins/screen_protector/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
   - video_player_avfoundation (from `.symlinks/plugins/video_player_avfoundation/darwin`)
@@ -98,18 +128,25 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - Firebase
+    - FirebaseABTesting
     - FirebaseCore
     - FirebaseCoreInternal
+    - FirebaseInAppMessaging
     - FirebaseInstallations
     - FirebaseMessaging
     - GoogleDataTransport
     - GoogleUtilities
     - nanopb
     - PromisesObjC
+    - ScreenProtectorKit
 
 EXTERNAL SOURCES:
+  firebase_app_installations:
+    :path: ".symlinks/plugins/firebase_app_installations/ios"
   firebase_core:
     :path: ".symlinks/plugins/firebase_core/ios"
+  firebase_in_app_messaging:
+    :path: ".symlinks/plugins/firebase_in_app_messaging/ios"
   firebase_messaging:
     :path: ".symlinks/plugins/firebase_messaging/ios"
   Flutter:
@@ -122,6 +159,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
   permission_handler_apple:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
+  screen_protector:
+    :path: ".symlinks/plugins/screen_protector/ios"
   shared_preferences_foundation:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
   url_launcher_ios:
@@ -131,10 +170,14 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Firebase: 065f2bb395062046623036d8e6dc857bc2521d56
+  firebase_app_installations: 7328ee3dc678246d975ccb33059590a5fd59a1e0
   firebase_core: 98bcc1bd1a097bcb8b1ed6e091de3039802527c4
+  firebase_in_app_messaging: 8a955f6377d1c6780fcc06a3b941c875be46fd06
   firebase_messaging: e24e69d994d53e46fd794143544841877bd85a53
+  FirebaseABTesting: a399ffe546392a39b19a5c2fb28bd8ea178a6f47
   FirebaseCore: 428912f751178b06bef0a1793effeb4a5e09a9b8
   FirebaseCoreInternal: b321eafae5362113bc182956fafc9922cfc77b72
+  FirebaseInAppMessaging: 04930fb0e619a6b538b2c990e26cd853424d085c
   FirebaseInstallations: 7b64ffd006032b2b019a59b803858df5112d9eaa
   FirebaseMessaging: 7d6cdbff969127c4151c824fe432f0e301210f15
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
@@ -146,10 +189,12 @@ SPEC CHECKSUMS:
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
   permission_handler_apple: 9878588469a2b0d0fc1e048d9f43605f92e6cec2
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
+  screen_protector: 585e4a9744efa35ec4ba9a6877b22e46b8d48987
+  ScreenProtectorKit: 6ceb3e0808341a9bc15d175bff40dfdd4b32da71
   shared_preferences_foundation: fcdcbc04712aee1108ac7fda236f363274528f78
   url_launcher_ios: 5334b05cef931de560670eeae103fd3e431ac3fe
   video_player_avfoundation: 7c6c11d8470e1675df7397027218274b6d2360b3
 
-PODFILE CHECKSUM: 3c63482e143d1b91d2d2560aee9fb04ecc74ac7e
+PODFILE CHECKSUM: 9ec32a60dde00aac53c7e5e2103db3262582ceb3
 
 COCOAPODS: 1.16.2
