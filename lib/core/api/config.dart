@@ -16,7 +16,7 @@ class ApiConfig {
   }) {
     // String curl = "curl --request ${method.toUpperCase()} \\\n  '$url'";
 
-    // Add headers
+    // Add headers to cURL command
     // headers?.forEach((key, value) {
     //   curl += " \\\n  --header '$key: $value'";
     // });
