@@ -318,35 +318,6 @@ Future<VersionCheckResult> fetchLatestVersion(String installedVersion) async {
 }
 
 /// ---------------- SCREENS ----------------
-
-class _VersionLoadingScreen extends StatelessWidget {
-  const _VersionLoadingScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: VibraniumColors.black,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            CircularProgressIndicator(color: VibraniumColors.cyan),
-            SizedBox(height: 16),
-            Text(
-              'Checking app version...',
-              style: TextStyle(
-                color: VibraniumColors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class ForceUpdateScreen extends StatelessWidget {
   final String message;
   final String currentVersion;

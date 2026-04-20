@@ -4,7 +4,7 @@ import 'package:app/core/providers/user_provider.dart';
 import 'package:app/core/routing/vibranium_route.dart';
 import 'package:app/screens/home/home_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 

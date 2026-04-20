@@ -180,10 +180,6 @@ class UserProvider extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
 
-    // if (kDebugMode) {
-    //   print("debug mode: skipping addTime API call");
-    //   return true;
-    // }
     final String url = '${ApiConfig.apiBaseUrl}/users/add-play-time';
     String correlationId = Uuid().v4();
     final prizeInSeconds = prize * 3600;

@@ -1009,7 +1009,7 @@ class _VibraniumDrawer extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        user!.firstName + " " + user.lastName,
+                        "${user.firstName} ${user.lastName}",
                         maxLines: 1,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,

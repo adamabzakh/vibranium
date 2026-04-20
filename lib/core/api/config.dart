@@ -14,12 +14,12 @@ class ApiConfig {
     Map<String, String>? headers,
     Object? body,
   }) {
-    String curl = "curl --request ${method.toUpperCase()} \\\n  '$url'";
+    // String curl = "curl --request ${method.toUpperCase()} \\\n  '$url'";
 
     // Add headers
-    headers?.forEach((key, value) {
-      curl += " \\\n  --header '$key: $value'";
-    });
+    // headers?.forEach((key, value) {
+    //   curl += " \\\n  --header '$key: $value'";
+    // });
 
     // Add body if it exists
     if (body != null) {
@@ -31,7 +31,7 @@ class ApiConfig {
       }
       // Escape single quotes in the body to prevent breaking the cURL command
       bodyString = bodyString.replaceAll("'", "'\\''");
-      curl += " \\\n  --data '$bodyString'";
+      // curl += " \\\n  --data '$bodyString'";
     }
   }
 }
