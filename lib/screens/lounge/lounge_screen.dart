@@ -454,7 +454,7 @@ class _MenuCard extends StatelessWidget {
                   children: [
                     Text(
                       item.name,
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: VibraniumColors.white,

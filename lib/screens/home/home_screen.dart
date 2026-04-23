@@ -7,6 +7,7 @@ import 'package:app/core/providers/user_provider.dart';
 import 'package:app/core/routing/vibranium_route.dart';
 import 'package:app/core/theme/vibranium_theme.dart';
 import 'package:app/screens/auth/login_screen.dart';
+import 'package:app/screens/auth/settings.dart';
 import 'package:app/screens/book_pc/book_pc_screen.dart';
 import 'package:app/screens/events/events_screen.dart';
 import 'package:app/screens/home/meal_barcode.dart';
@@ -64,6 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await userProvider.getUserRank();
     await userProvider.updateUserRank(isUpdatingCollection: false);
     await userProvider.registerUser();
+    await userProvider.getLeaderBoard();
 
     if (kDebugMode) {
       print("Collection status : ${userProvider.user!.rank.hasCollected}");
@@ -216,6 +218,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ],
                               ),
                             ],
+                          ),
+                        ),
+                      ),
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                        sliver: SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 18.0),
+                            child: leaderBoardCard(userProvider),
                           ),
                         ),
                       ),
@@ -619,6 +630,93 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+}
+
+Widget leaderBoardCard(UserProvider userProvider) {
+  return Container(
+    width: double.infinity,
+    height: 250,
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(24),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Colors.grey[900]!, Colors.black, Color(0xFFCD7F32)],
+      ),
+      boxShadow: [
+        BoxShadow(color: Color(0xFFCD7F32), blurRadius: 25, spreadRadius: 2),
+      ],
+      border: Border.all(color: Color(0xFFCD7F32).withOpacity(0.4), width: 1),
+    ),
+    child: Column(
+      children: [
+        SizedBox(height: 10),
+        Center(
+          child: Text(
+            'LEADER BOARD',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        SizedBox(height: 5),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                for (var user in userProvider.leaderBoard)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 5,
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.deepPurple.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Color.fromARGB(255, 255, 159, 63),
+                          style:
+                              (userProvider.leaderBoard.first['uuid'] ==
+                                  user['uuid'])
+                              ? BorderStyle.solid
+                              : BorderStyle.none,
+                        ),
+                      ),
+                      child: ListTile(
+                        title: Text(
+                          (userProvider.leaderBoard.first['uuid'] ==
+                                  user['uuid'])
+                              ? (userProvider.user!.uuid == user['uuid'])
+                                    ? "Me (${user['username']})"
+                                    : user['username']
+                              : user['username'],
+                        ),
+                        leading: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Container(
+                            width: 50,
+                            child: Image.asset(
+                              user['rank'].toString().toLowerCase() ==
+                                      "vibe: eternal"
+                                  ? "assets/branding/vibe_eternal.png"
+                                  : "assets/branding/${user['rank'].toString().toLowerCase()}.png",
+                            ),
+                          ),
+                        ),
+                        trailing: Text(user['totalSpent'].toString() + " JD"),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class VibraniumVisaCard extends StatefulWidget {
@@ -1100,16 +1198,14 @@ class _VibraniumDrawer extends StatelessWidget {
             ),
 
             _DrawerTile(
-              icon: Icons.logout_rounded,
-              iconColor: colorScheme.error,
-              title: 'Log out',
+              icon: Icons.settings_outlined,
+              iconColor: colorScheme.primary,
+              title: 'Settings',
               onTap: () {
-                SharedPreferences.getInstance().then((c) => c.clear());
                 Navigator.of(context).pop();
-                Navigator.of(context).pushAndRemoveUntil(
-                  vibraniumPageRoute(const LoginScreen()),
-                  (route) => false,
-                );
+                Navigator.of(
+                  context,
+                ).push<void>(vibraniumPageRoute(SettingsPage()));
               },
             ),
           ],
@@ -1372,7 +1468,7 @@ class _EventTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    "From ${DateFormat("yyyy/mm/dd hh:mm").format(event.addedAt)} - to ${DateFormat("yyyy/mm/dd hh:mm").format(event.endDateTime!)}",
+                    "From ${DateFormat("yyyy/MM/dd hh:mm").format(event.addedAt)} - to ${DateFormat("yyyy/MM/dd hh:mm").format(event.endDateTime!)}",
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ),

@@ -83,9 +83,13 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
       ).pushReplacement(vibraniumPageRoute(const HomeScreen()));
     } catch (e) {
       print('Error creating account: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to create account')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            userProvider.errorMessage ?? 'Failed to create account',
+          ),
+        ),
+      );
     }
   }
 
@@ -213,8 +217,6 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                     prefixIcon: Icon(Icons.cake_outlined),
                     suffixIcon: Icon(Icons.calendar_today_rounded),
                   ),
-                  validator: (_) =>
-                      _dateOfBirth == null ? 'Select your date of birth' : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -225,9 +227,12 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                   ),
                   onFieldSubmitted: (_) => _onCreateAccount(),
                   validator: (v) {
-                    final d = _digitsOnly(v ?? '');
-                    if (d.isEmpty) return 'Enter your phone number';
-                    if (d.length < 10) return 'Enter a valid phone number';
+                    if (v == null || v.isEmpty) {
+                      return null;
+                    }
+
+                    final d = _digitsOnly(v);
+                    if (d.length != 10) return 'Enter a valid phone number';
                     return null;
                   },
                 ),

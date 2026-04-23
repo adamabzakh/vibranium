@@ -32,6 +32,25 @@ class UserProvider extends ChangeNotifier {
   List<UserTime> userTime = [];
   GgMachine? currentBookedPc;
 
+  String? errorMessage;
+
+  List leaderBoard = [];
+
+  Future<void> getLeaderBoard() async {
+    final response = await http.get(
+      Uri.parse("https://vibraniumjobooking.com/api/userLeaderBoard.php"),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body)['data'];
+
+      leaderBoard = data;
+      notifyListeners();
+    } else {
+      print("Faild to get LeaderBoard : ${response.statusCode}");
+    }
+  }
+
   Future<void> getCurrectLoggedingPC(PcProvider pcProvider) async {
     if (pcProvider.pcs.isEmpty) {
       await pcProvider.fetchMachines();
@@ -133,7 +152,7 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> deleteAcc() async {
+  Future<bool> deleteAcc() async {
     final String url =
         '${ApiConfig.apiBaseUrl}/users/delete?Uuid=${user!.uuid}';
 
@@ -156,16 +175,17 @@ class UserProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        print("karam account deleted");
+        print("account deleted");
 
         notifyListeners();
+        return true;
       } else {
         print('Failed to get user sessions: ${response.body}');
-        throw Exception('Failed to get sessions: ${response.body}');
+        return false;
       }
     } catch (e) {
       print('Error fetching sessions: $e');
-      throw Exception('Error fetching sessions: $e');
+      return false;
     }
   }
 
@@ -406,10 +426,10 @@ class UserProvider extends ChangeNotifier {
       return;
     }
     SharedPreferences.getInstance().then((pref) async {
-      final String? userName = pref.getString('userUsername');
+      final String? userName = pref.getString('userUuid');
 
       if (userName != null) {
-        GgLeapUser user = await getUserByUserName(userName);
+        GgLeapUser user = await getUserByUuid(userName);
 
         if (!user.locked) {
           setUser(user);
@@ -569,6 +589,10 @@ class UserProvider extends ChangeNotifier {
       });
     } else {
       print('Failed to create user: ${response.body}');
+      errorMessage = jsonDecode(
+        response.body,
+      )['ValidationFailures'][0]['Message'];
+      notifyListeners();
       throw Exception('Failed to create user: ${response.body}');
     }
   }
@@ -699,6 +723,7 @@ class UserProvider extends ChangeNotifier {
 
       await updateUserOld(
         uuid: user!.uuid,
+        username: user!.username,
         rank: rank,
         reward: rank == "VIBE: Eternal"
             ? "10"
@@ -728,6 +753,7 @@ class UserProvider extends ChangeNotifier {
     String? hasCollected,
     double? totalSpent,
     String? newCollection,
+    required String username,
   }) async {
     try {
       final body = <String, String>{'action': 'update_user', 'uuid': uuid};
@@ -737,6 +763,7 @@ class UserProvider extends ChangeNotifier {
       if (hasCollected != null) body['hasCollected'] = hasCollected;
       if (totalSpent != null) body['totalSpent'] = totalSpent.toString();
       if (newCollection != null) body['newCollection'] = newCollection;
+      body['username'] = username;
 
       print("POST body: $body");
 

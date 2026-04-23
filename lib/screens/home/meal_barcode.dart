@@ -79,8 +79,8 @@ class _MemberBarCodeScreenState extends State<MemberBarCodeScreen> {
               const SizedBox(height: 10),
               Center(
                 child: SizedBox(
-                  width: 80,
-                  height: 80,
+                  width: 150,
+                  height: 150,
                   child: Image.asset(
                     'assets/branding/vibranium_logo.png',
                     fit: BoxFit.contain,
