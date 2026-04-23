@@ -6,7 +6,6 @@ import 'package:app/core/providers/queue_provider.dart';
 import 'package:app/core/providers/user_provider.dart';
 import 'package:app/core/routing/vibranium_route.dart';
 import 'package:app/core/theme/vibranium_theme.dart';
-import 'package:app/screens/auth/login_screen.dart';
 import 'package:app/screens/auth/settings.dart';
 import 'package:app/screens/book_pc/book_pc_screen.dart';
 import 'package:app/screens/events/events_screen.dart';
@@ -21,7 +20,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 const String _kLogoAsset = 'assets/branding/vibranium_logo.png';
 
