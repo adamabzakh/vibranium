@@ -220,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                         sliver: SliverToBoxAdapter(
                           child: Padding(
                             padding: const EdgeInsets.only(top: 18.0),
@@ -505,56 +505,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                           ]),
-                        ),
-                      ),
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(20, 28, 20, 8),
-                        sliver: SliverToBoxAdapter(
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  'Last Sessions',
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).push<void>(
-                                      vibraniumPageRoute(
-                                        SessionsScreen(
-                                          sessions: userProvider.userSesstions,
-                                        ),
-                                      ),
-                                    ),
-                                child: const Text('See all'),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate((
-                            context,
-                            index,
-                          ) {
-                            final e = userProvider.userSesstions[index];
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                bottom:
-                                    index ==
-                                        userProvider.userSesstions.length - 1
-                                    ? 0
-                                    : 10,
-                              ),
-                              child: _EventTile(event: e),
-                            );
-                          }, childCount: userProvider.userSesstions.length),
                         ),
                       ),
                       const SliverToBoxAdapter(child: SizedBox(height: 28)),

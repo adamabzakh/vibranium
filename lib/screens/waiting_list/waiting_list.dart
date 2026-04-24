@@ -1,5 +1,6 @@
 import 'package:app/core/providers/queue_provider.dart';
 import 'package:app/core/providers/user_provider.dart';
+import 'package:app/screens/waiting_list/dash.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
@@ -190,7 +191,7 @@ class _WaitingListScreenState extends State<WaitingListScreen> {
                         );
                       }).toList(),
                     ),
-
+                    VibraniumCategoryStatus(),
                     const SizedBox(height: 20),
 
                     Center(
@@ -255,6 +256,7 @@ class _WaitingListScreenState extends State<WaitingListScreen> {
                               ),
                       ),
                     ),
+                    SizedBox(height: 30),
                   ]
                   // --- LIVE DASHBOARD VIEW (User is in queue) ---
                   else ...[

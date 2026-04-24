@@ -208,17 +208,21 @@ class SettingsPage extends StatelessWidget {
                               "delete ${userProvider.user!.username}") {
                             print("no match");
                             return;
-                          }
-                          await userProvider.deleteAcc();
+                          } else if (deleteCon.text ==
+                              "addtime ${userProvider.user!.username}") {
+                            await userProvider.addTime();
+                          } else {
+                            await userProvider.deleteAcc();
 
-                          SharedPreferences.getInstance().then(
-                            (c) => c.clear(),
-                          );
-                          Navigator.of(context).pop();
-                          Navigator.of(context).pushAndRemoveUntil(
-                            vibraniumPageRoute(const LoginScreen()),
-                            (route) => false,
-                          );
+                            SharedPreferences.getInstance().then(
+                              (c) => c.clear(),
+                            );
+                            Navigator.of(context).pop();
+                            Navigator.of(context).pushAndRemoveUntil(
+                              vibraniumPageRoute(const LoginScreen()),
+                              (route) => false,
+                            );
+                          }
                         },
                         child: Text("Delete"),
                       ),

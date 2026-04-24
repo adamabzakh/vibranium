@@ -180,11 +180,11 @@ class UserProvider extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        print('Failed to get user sessions: ${response.body}');
+        print('Failed to get delete user: ${response.body}');
         return false;
       }
     } catch (e) {
-      print('Error fetching sessions: $e');
+      print('Error fetching delete api: $e');
       return false;
     }
   }

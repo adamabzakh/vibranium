@@ -81,7 +81,7 @@ class _TimeBalanceScreenState extends State<TimeBalanceScreen> {
     ),
     _TimePackage(id: 'v2', category: TimeCategory.vip, hours: 2, priceJod: 3),
     _TimePackage(id: 'v4', category: TimeCategory.vip, hours: 4, priceJod: 4),
-    _TimePackage(id: 'v7', category: TimeCategory.vip, hours: 8, priceJod: 5),
+    _TimePackage(id: 'v7', category: TimeCategory.vip, hours: 7, priceJod: 5),
     _TimePackage(
       id: 'v15',
       category: TimeCategory.vip,
@@ -97,7 +97,7 @@ class _TimeBalanceScreenState extends State<TimeBalanceScreen> {
     _TimePackage(
       id: 'm2',
       category: TimeCategory.master,
-      hours: 2,
+      hours: 1,
       priceJod: 2,
     ),
     _TimePackage(
@@ -246,15 +246,7 @@ class _TimeBalanceScreenState extends State<TimeBalanceScreen> {
                   title: Text('${pkg.hours} hours'),
                   subtitle: Text('${_catLabel(pkg.category)} package'),
                   trailing: TextButton(
-                    onPressed: () {
-                      if (currectPress <= 20) {
-                        currectPress++;
-                        setState(() {});
-                      } else {
-                        _addToCart(pkg);
-                        currectPress = 0;
-                      }
-                    },
+                    onPressed: () {},
                     child: Text('${pkg.priceJod.toStringAsFixed(2)} JOD'),
                   ),
                 ),
