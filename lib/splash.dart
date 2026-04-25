@@ -39,8 +39,8 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Hero(
           tag: heroTag,
           child: SizedBox(
-            width: 200,
-            height: 200,
+            width: 300,
+            height: 300,
             child: Image.asset(
               'assets/branding/vibranium_logo.png',
               fit: BoxFit.contain,

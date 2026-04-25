@@ -3,33 +3,20 @@ import 'dart:ui';
 import 'package:app/core/api/config.dart';
 import 'package:app/core/providers/user_provider.dart';
 import 'package:app/core/theme/vibranium_theme.dart';
-import 'package:app/main.dart';
+import 'package:app/main.dart'; // Ensure currentJWT is accessible here
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
-class MenuItemModel {
-  final String name;
-  final String imageUrl;
-  final String category;
-  final double price;
+// --- Constants & Mapping ---
 
-  MenuItemModel({
-    required this.name,
-    required this.imageUrl,
-    required this.category,
-    required this.price,
-  });
-
-  factory MenuItemModel.fromApi(Map<String, dynamic> json) {
-    return MenuItemModel(
-      name: json['Name'] ?? '',
-      imageUrl: json['IconUrl'] ?? '',
-      category: _categoryMap[json['CategoryUuid']] ?? 'Unknown',
-      price: (json['Price'] as num?)?.toDouble() ?? 0.0,
-    );
-  }
-}
+const Set<String> _loungeCategories = {
+  'c2432d17-c65b-4c68-8f66-0b0a741bb66f', // Burgers
+  'f53f2f14-1566-4c95-9364-dc4dbba470e7', // Pasta
+  '208c3947-0899-4e8f-93a7-d6dc971b0af0', // Pizza
+  '671ec85e-5c21-4954-8e8d-1a14c64058c8', // Sandwiches
+  'ac22ea63-338a-4122-8e13-29b15a03a8c6', // Starter
+};
 
 const Map<String, String> _categoryMap = {
   'e04f31dd-41df-44fa-9746-17946df6f2ed': 'Beverages',
@@ -48,6 +35,43 @@ const Map<String, String> _categoryMap = {
   '202d83fe-9794-4848-bf7b-24ff9986b0f5': 'Ice Cream',
 };
 
+// --- Models ---
+
+class MenuItemModel {
+  final String name;
+  final String imageUrl;
+  final String category;
+  final String mainCategory;
+  final double price;
+
+  MenuItemModel({
+    required this.name,
+    required this.imageUrl,
+    required this.category,
+    required this.mainCategory,
+    required this.price,
+  });
+
+  factory MenuItemModel.fromApi(Map<String, dynamic> json) {
+    String categoryUuid = json['CategoryUuid'] ?? '';
+    String subCat = _categoryMap[categoryUuid] ?? 'Unknown';
+
+    String mainCat = _loungeCategories.contains(categoryUuid)
+        ? 'Vibe Lounge'
+        : 'Vibe Cafe';
+
+    return MenuItemModel(
+      name: json['Name'] ?? '',
+      imageUrl: json['IconUrl'] ?? '',
+      category: subCat,
+      mainCategory: mainCat,
+      price: (json['Price'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+}
+
+// --- Screen ---
+
 class StunningMenuScreen extends StatefulWidget {
   const StunningMenuScreen({super.key});
 
@@ -62,7 +86,9 @@ class _StunningMenuScreenState extends State<StunningMenuScreen> {
   String? _error;
   List<MenuItemModel> _allItems = [];
   List<MenuItemModel> _filteredItems = [];
-  String _selectedCategory = 'All';
+
+  String _selectedMainCategory = 'Vibe Cafe';
+  String _selectedSubCategory = 'All';
 
   @override
   void initState() {
@@ -108,7 +134,6 @@ class _StunningMenuScreenState extends State<StunningMenuScreen> {
 
       setState(() {
         _allItems = items;
-        _filteredItems = items;
         _isLoading = false;
       });
 
@@ -125,15 +150,16 @@ class _StunningMenuScreenState extends State<StunningMenuScreen> {
     final query = _searchController.text.trim().toLowerCase();
 
     final result = _allItems.where((item) {
-      final matchesCategory =
-          _selectedCategory == 'All' || item.category == _selectedCategory;
-
+      final matchesMain = item.mainCategory == _selectedMainCategory;
+      final matchesSub =
+          _selectedSubCategory == 'All' ||
+          item.category == _selectedSubCategory;
       final matchesSearch =
           query.isEmpty ||
           item.name.toLowerCase().contains(query) ||
           item.category.toLowerCase().contains(query);
 
-      return matchesCategory && matchesSearch;
+      return matchesMain && matchesSub && matchesSearch;
     }).toList();
 
     setState(() {
@@ -141,8 +167,13 @@ class _StunningMenuScreenState extends State<StunningMenuScreen> {
     });
   }
 
-  List<String> get _categories {
-    final set = {'All', ..._allItems.map((e) => e.category)};
+  List<String> get _currentSubCategories {
+    final set = {
+      'All',
+      ..._allItems
+          .where((e) => e.mainCategory == _selectedMainCategory)
+          .map((e) => e.category),
+    };
     return set.toList();
   }
 
@@ -186,6 +217,9 @@ class _StunningMenuScreenState extends State<StunningMenuScreen> {
               physics: const BouncingScrollPhysics(),
               slivers: [
                 SliverToBoxAdapter(child: _buildSearchBar()),
+                SliverToBoxAdapter(child: _buildMainCategorySelector()),
+                const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
                 if (_isLoading)
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
@@ -217,7 +251,7 @@ class _StunningMenuScreenState extends State<StunningMenuScreen> {
                     child: _EmptyView(),
                   )
                 else ...[
-                  SliverToBoxAdapter(child: _buildCategoryBar()),
+                  SliverToBoxAdapter(child: _buildSubCategoryBar()),
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -281,7 +315,6 @@ class _StunningMenuScreenState extends State<StunningMenuScreen> {
             ),
             child: TextField(
               controller: _searchController,
-
               style: const TextStyle(color: VibraniumColors.white),
               decoration: const InputDecoration(
                 icon: Icon(Icons.search_rounded, color: VibraniumColors.cyan),
@@ -290,9 +323,6 @@ class _StunningMenuScreenState extends State<StunningMenuScreen> {
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
-                errorBorder: InputBorder.none,
-                disabledBorder: InputBorder.none,
-                focusedErrorBorder: InputBorder.none,
               ),
             ),
           ),
@@ -301,58 +331,111 @@ class _StunningMenuScreenState extends State<StunningMenuScreen> {
     );
   }
 
-  Widget _buildCategoryBar() {
+  Widget _buildMainCategorySelector() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: ['Vibe Cafe', 'Vibe Lounge'].map((cat) {
+          bool isSelected = _selectedMainCategory == cat;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedMainCategory = cat;
+                  _selectedSubCategory = 'All'; // Reset sub-cat filter
+                });
+                _applyFilters();
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                margin: EdgeInsets.only(right: cat == 'Vibe Cafe' ? 10 : 0),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: isSelected
+                      ? VibraniumColors.purple
+                      : VibraniumColors.surfaceContainer,
+                  border: Border.all(
+                    color: isSelected
+                        ? VibraniumColors.cyan.withOpacity(0.6)
+                        : VibraniumColors.outline,
+                  ),
+                  boxShadow: isSelected
+                      ? const [
+                          BoxShadow(
+                            color: Color(0x3322D3EE),
+                            blurRadius: 12,
+                            offset: Offset(0, 4),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Center(
+                  child: Text(
+                    cat,
+                    style: TextStyle(
+                      color: isSelected
+                          ? VibraniumColors.white
+                          : VibraniumColors.onSurfaceMuted,
+                      fontWeight: isSelected
+                          ? FontWeight.w800
+                          : FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildSubCategoryBar() {
+    final subCats = _currentSubCategories;
+
+    // Hide subcategory bar if there are no items to filter
+    if (subCats.length <= 1) return const SizedBox.shrink();
+
     return SizedBox(
-      height: 52,
+      height: 48,
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         scrollDirection: Axis.horizontal,
-        itemCount: _categories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemCount: subCats.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          final category = _categories[index];
-          final selected = category == _selectedCategory;
+          final category = subCats[index];
+          final isSelected = category == _selectedSubCategory;
 
           return GestureDetector(
             onTap: () {
-              setState(() => _selectedCategory = category);
+              setState(() => _selectedSubCategory = category);
               _applyFilters();
             },
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
-                gradient: selected
-                    ? const LinearGradient(
-                        colors: [
-                          VibraniumColors.purpleDeep,
-                          VibraniumColors.purple,
-                        ],
-                      )
-                    : null,
-                color: selected ? null : VibraniumColors.surfaceContainer,
+                color: isSelected
+                    ? VibraniumColors.cyan
+                    : VibraniumColors.surfaceContainer,
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: selected
-                      ? VibraniumColors.cyan.withOpacity(0.55)
+                  color: isSelected
+                      ? VibraniumColors.cyan
                       : VibraniumColors.outline,
                 ),
-                boxShadow: selected
-                    ? const [
-                        BoxShadow(
-                          color: Color(0x4422D3EE),
-                          blurRadius: 16,
-                          offset: Offset(0, 8),
-                        ),
-                      ]
-                    : null,
               ),
               child: Center(
                 child: Text(
                   category,
                   style: TextStyle(
-                    color: VibraniumColors.white,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    color: isSelected
+                        ? VibraniumColors.black
+                        : VibraniumColors.white,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                   ),
                 ),
               ),
@@ -363,6 +446,8 @@ class _StunningMenuScreenState extends State<StunningMenuScreen> {
     );
   }
 }
+
+// --- Supporting UI Components ---
 
 class _MenuCard extends StatelessWidget {
   final MenuItemModel item;

@@ -190,11 +190,11 @@ class UserProvider extends ChangeNotifier {
   }
 
   Future<bool> addTime({int? prizeOld}) async {
-    int prize = 0;
+    double prize = 0;
     if (prizeOld == null) {
-      prize = 4;
+      prize = 4.19;
     } else {
-      prize = prizeOld;
+      prize = prizeOld.toDouble();
     }
 
     isLoading = true;
@@ -228,7 +228,7 @@ class UserProvider extends ChangeNotifier {
         },
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode > 299) {
         isLoading = false;
         notifyListeners();
         return true;

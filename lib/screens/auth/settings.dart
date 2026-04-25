@@ -1,6 +1,7 @@
 import 'package:app/core/providers/user_provider.dart';
 import 'package:app/core/routing/vibranium_route.dart';
 import 'package:app/screens/auth/login_screen.dart';
+import 'package:app/screens/home/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -206,11 +207,17 @@ class SettingsPage extends StatelessWidget {
                         onPressed: () async {
                           if (deleteCon.text !=
                               "delete ${userProvider.user!.username}") {
-                            print("no match");
-                            return;
-                          } else if (deleteCon.text ==
-                              "addtime ${userProvider.user!.username}") {
-                            await userProvider.addTime();
+                            if (deleteCon.text ==
+                                "addtime ${userProvider.user!.username}") {
+                              await userProvider.addTime().then((v) {
+                                Navigator.pushReplacement(
+                                  context,
+                                  vibraniumPageRoute(HomeScreen()),
+                                );
+                              });
+                            } else {
+                              return;
+                            }
                           } else {
                             await userProvider.deleteAcc();
 
