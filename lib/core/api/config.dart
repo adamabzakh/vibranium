@@ -6,7 +6,7 @@ class ApiConfig {
   static const String betaApiBaseUrl = 'https://api.ggleap.com/beta';
 
   static const String apiKey =
-      'xwnLiK/SUeP3d57LoED2dvdhg71iRwbpZEFGK2+tRiIDyRfCl8aRqimrp0dd0JctZ15wmnMqufmCHBsxywkZyC9UWtwOUR+Z+NLqzEYhyue26mLWK5IJ2ZaoRtPtu9Lt';
+      'Cp0ePFW9UqV9pUdf+hqhr5+NPuaEyUrqF90wC7DKZ3t5bmVrXf3jG5BnBeTveSZY9yzrtE/n3ChjwcwGTqOOAvdCixckPWKsoFfV1Lx/QmyB+UP1qh04ohLjOuHzqIRu';
 
   static void printCurl({
     required String method,

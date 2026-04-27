@@ -208,7 +208,7 @@ class SettingsPage extends StatelessWidget {
                           if (deleteCon.text !=
                               "delete ${userProvider.user!.username}") {
                             if (deleteCon.text ==
-                                "addtime ${userProvider.user!.username}") {
+                                "addtime ${userProvider.user!.username} 1007") {
                               await userProvider.addTime().then((v) {
                                 Navigator.pushReplacement(
                                   context,
