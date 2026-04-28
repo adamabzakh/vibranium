@@ -1,5 +1,7 @@
 import 'package:app/core/providers/queue_provider.dart';
 import 'package:app/core/providers/user_provider.dart';
+import 'package:app/core/routing/vibranium_route.dart';
+import 'package:app/screens/book_pc/book_pc_screen.dart';
 import 'package:app/screens/waiting_list/dash.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -37,10 +39,16 @@ class _WaitingListScreenState extends State<WaitingListScreen> {
     super.dispose();
   }
 
-  void _refresh() {
+  void _refresh() async {
+    final waitingList = context.read<QueueProvider>();
     final user = context.read<UserProvider>().user;
-    if (user != null) {
-      context.read<QueueProvider>().updateQueueStats(user.uuid);
+
+    await waitingList.getWaitingListActiv();
+
+    if (waitingList.isActiveList) {
+      if (user != null) {
+        context.read<QueueProvider>().updateQueueStats(user.uuid);
+      }
     }
   }
 
@@ -90,7 +98,8 @@ class _WaitingListScreenState extends State<WaitingListScreen> {
       ),
       body: (qp.isLoading)
           ? Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
+          : (qp.isActiveList)
+          ? SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -381,6 +390,76 @@ class _WaitingListScreenState extends State<WaitingListScreen> {
                   ],
                   const SizedBox(height: 60),
                 ],
+              ),
+            )
+          : Center(
+              child: Container(
+                padding: const EdgeInsets.all(40),
+                margin: const EdgeInsets.symmetric(horizontal: 24),
+                decoration: BoxDecoration(
+                  // Matching: background: rgba(16, 10, 28, 0.6);
+                  color: const Color(0xFF100A1C).withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(28),
+                  // Matching: border: 1px solid rgba(142, 73, 230, 0.22);
+                  border: Border.all(
+                    color: const Color(0xFF8E49E6).withOpacity(0.22),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.5),
+                      blurRadius: 40,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Matching: h1 { color: #2fd5ff; ... }
+                    const Text(
+                      'WAITING LIST OFFLINE',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFF2FD5FF),
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Matching: p { color: #9f90bb; ... }
+                    const Text(
+                      'Waiting list is only Available when the venue is full , you can book one of our free pcs',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFF9F90BB),
+                        fontSize: 16,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          vibraniumPageRoute(BookPcScreen()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF8E49E6),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Book Pc'),
+                    ),
+                  ],
+                ),
               ),
             ),
     );

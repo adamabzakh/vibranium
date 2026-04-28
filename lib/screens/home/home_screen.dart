@@ -8,7 +8,7 @@ import 'package:app/core/routing/vibranium_route.dart';
 import 'package:app/core/theme/vibranium_theme.dart';
 import 'package:app/screens/auth/settings.dart';
 import 'package:app/screens/book_pc/book_pc_screen.dart';
-import 'package:app/screens/events/events_screen.dart';
+
 import 'package:app/screens/home/meal_barcode.dart';
 import 'package:app/screens/home/rank.dart';
 import 'package:app/screens/lounge/lounge_screen.dart';
@@ -224,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         sliver: SliverToBoxAdapter(
                           child: Padding(
                             padding: const EdgeInsets.only(top: 18.0),
-                            child: leaderBoardCard(userProvider),
+                            child: leaderBoardCard(userProvider, context),
                           ),
                         ),
                       ),
@@ -253,6 +253,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               rankCard(userProvider.user!.rank),
+
                               if (userProvider.user!.rank.rank.toUpperCase() ==
                                       "VIBE: ETERNAL" &&
                                   userProvider.user!.rank.remainMeals > 0)
@@ -521,66 +522,31 @@ class _HomeScreenState extends State<HomeScreen> {
     return InkWell(
       splashColor: Colors.transparent,
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const RanksSliderScreen()),
-        );
+        Navigator.push(context, vibraniumPageRoute(RanksSliderScreen()));
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 14),
-        child: Stack(
-          children: [
-            VibraniumVisaCard(
-              totalSpent: rank.totalSpent,
-              userName:
-                  "${userProvider.user!.firstName} ${userProvider.user!.lastName} (${userProvider.user!.username})",
+        child: Hero(
+          tag: "rank",
+          child: ClipRRect(
+            borderRadius: BorderRadiusGeometry.circular(24),
+            child: Material(
+              child: VibraniumVisaCard(
+                totalSpent: rank.totalSpent,
+                userName:
+                    "${userProvider.user!.firstName} ${userProvider.user!.lastName} (${userProvider.user!.username})",
+              ),
             ),
-            (rank.totalSpent <= 50)
-                ? Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.8),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    width: double.infinity,
-                    height: 230,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.lock_rounded, color: Colors.black, size: 32),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Your rank is locked',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 18.0),
-                          child: Text(
-                            'Raise your monthly spending to minimum 50 JOD to unlock your Loyality Pass \n\nCurrent monthly spending: ${rank.totalSpent.toStringAsFixed(2)} JOD',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : Container(),
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
-Widget leaderBoardCard(UserProvider userProvider) {
+Widget leaderBoardCard(UserProvider userProvider, context) {
+  final theme = Theme.of(context);
+  final colorScheme = theme.colorScheme;
   return Container(
     width: double.infinity,
     height: 250,
@@ -589,10 +555,16 @@ Widget leaderBoardCard(UserProvider userProvider) {
       gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [Colors.grey[900]!, Colors.black, Color(0xFFCD7F32)],
+        colors: [
+          colorScheme.primary,
+          Colors.black,
+          Colors.black,
+          Colors.black,
+          colorScheme.primary,
+        ],
       ),
       boxShadow: [
-        BoxShadow(color: Color(0xFFCD7F32), blurRadius: 25, spreadRadius: 2),
+        BoxShadow(color: colorScheme.primary, blurRadius: 10, spreadRadius: 1),
       ],
       border: Border.all(color: Color(0xFFCD7F32).withOpacity(0.4), width: 1),
     ),
@@ -600,12 +572,24 @@ Widget leaderBoardCard(UserProvider userProvider) {
       children: [
         SizedBox(height: 10),
         Center(
-          child: Text(
-            'LEADER BOARD',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'LEADER BOARD',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'Money spent',
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+              ],
             ),
           ),
         ),
@@ -625,7 +609,7 @@ Widget leaderBoardCard(UserProvider userProvider) {
                         color: Colors.deepPurple.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: Color.fromARGB(255, 255, 159, 63),
+                          color: colorScheme.tertiary,
                           style:
                               (userProvider.leaderBoard.first['uuid'] ==
                                   user['uuid'])
@@ -692,7 +676,7 @@ class _VibraniumVisaCardState extends State<VibraniumVisaCard> {
     final userProvider = context.read<UserProvider>();
 
     if (widget.totalSpent >= 250) {
-      rankName = "VIBE: ETERNAL";
+      rankName = "VIBE ETERNAL";
       themeColor = const Color(0xFF00E5FF); // Electric Blue
       progress = 1.0;
       nextGoal = 250.0;
@@ -721,9 +705,6 @@ class _VibraniumVisaCardState extends State<VibraniumVisaCard> {
     // keep progress safe
     progress = progress.clamp(0.0, 1.0);
 
-    final imagePath =
-        "assets/branding/${rankName.toLowerCase().replaceAll(" ", "_").replaceAll(":", "")}.png";
-
     return Container(
       width: double.infinity,
       height: 230,
@@ -748,23 +729,6 @@ class _VibraniumVisaCardState extends State<VibraniumVisaCard> {
         borderRadius: BorderRadius.circular(24),
         child: Stack(
           children: [
-            // --- RANK IMAGE PLACEHOLDER ---
-            (rankName == "None")
-                ? Container()
-                : Positioned(
-                    right: 20,
-                    top: 40,
-                    child: Opacity(
-                      opacity: 0.4,
-                      child: Image.asset(
-                        imagePath, // Pass your rank icon here
-                        width: 140,
-                        height: 140,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-
             // --- CARD CONTENT ---
             Padding(
               padding: const EdgeInsets.all(24.0),
@@ -820,20 +784,12 @@ class _VibraniumVisaCardState extends State<VibraniumVisaCard> {
                         ),
                       ),
                       const SizedBox(height: 5),
-                      (widget.totalSpent >= 200)
-                          ? Container()
-                          : Text(
-                              "${nextGoal - widget.totalSpent} JD TO NEXT LEVEL",
-                              style: const TextStyle(
-                                color: Colors.white54,
-                                fontSize: 10,
-                              ),
-                            ),
                     ],
                   ),
 
                   (userProvider.user!.rank.hasCollected == "false" &&
-                          userProvider.user!.rank.rank != "Unranked")
+                          userProvider.user!.rank.rank != "Unranked" &&
+                          userProvider.user!.rank.rank != "None")
                       ? ElevatedButton(
                           onPressed: () async {
                             setState(() {
@@ -872,6 +828,16 @@ class _VibraniumVisaCardState extends State<VibraniumVisaCard> {
                           ),
                         )
                       : Container(),
+
+                  (widget.totalSpent >= 200)
+                      ? Container()
+                      : Text(
+                          "${nextGoal - widget.totalSpent} JD TO ${(userProvider.user!.rank.rank == "None") ? "Unlock Vibranium Loyality pass".toUpperCase() : "NEXT LEVEL"}",
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 10,
+                          ),
+                        ),
                 ],
               ),
             ),
@@ -884,7 +850,10 @@ class _VibraniumVisaCardState extends State<VibraniumVisaCard> {
               child: Container(
                 height: 6,
                 width: double.infinity,
-                color: Colors.white.withOpacity(0.05),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(30),
+                ),
                 child: FractionallySizedBox(
                   alignment: Alignment.centerLeft,
                   widthFactor: progress.clamp(0.0, 1.0),
@@ -1109,6 +1078,17 @@ class _VibraniumDrawer extends StatelessWidget {
                 Navigator.of(
                   context,
                 ).push<void>(vibraniumPageRoute(const WaitingListScreen()));
+              },
+            ),
+            _DrawerTile(
+              icon: Icons.military_tech_outlined,
+              iconColor: colorScheme.secondary,
+              title: 'Ranking',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(
+                  context,
+                ).push<void>(vibraniumPageRoute(const RanksSliderScreen()));
               },
             ),
             _DrawerTile(
@@ -1379,8 +1359,8 @@ class _ActionCard extends StatelessWidget {
   }
 }
 
-class _EventTile extends StatelessWidget {
-  const _EventTile({required this.event});
+class EventTile extends StatelessWidget {
+  const EventTile({required this.event});
   final GgSession event;
 
   @override

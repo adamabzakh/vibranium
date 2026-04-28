@@ -32,8 +32,8 @@ android {
         applicationId = "com.vibraniumesports.app"
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = 3
+        versionName = "1.0.1"
     }
 
     signingConfigs {

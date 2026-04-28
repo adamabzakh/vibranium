@@ -9,6 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 class QueueProvider extends ChangeNotifier {
   static const String _baseUrl = "https://vibraniumjobooking.com/api";
   bool _isLoading = false;
+  bool _isActiveList = true;
   Map<String, dynamic> laneStats = {};
   List<dynamic> _userQueues = [];
   List<dynamic> _fullWaitingList = [];
@@ -16,6 +17,7 @@ class QueueProvider extends ChangeNotifier {
 
   // Getters
   bool get isLoading => _isLoading;
+  bool get isActiveList => _isActiveList;
   List<dynamic> get fullWaitingList => _fullWaitingList;
   Map<String, dynamic>? get bestPosition => _bestPosition;
   List<dynamic> get userQueues => _userQueues;
@@ -38,6 +40,19 @@ class QueueProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint("Stats Error: $e");
     }
+  }
+
+  Future<void> getWaitingListActiv() async {
+    await http
+        .get(
+          Uri.parse(
+            "https://vibraniumjobooking.com/api/get_waiting_status.php",
+          ),
+        )
+        .then((v) {
+          _isActiveList = (v.body == "true") ? true : false;
+          notifyListeners();
+        });
   }
 
   Future<bool> joinWaitingList(

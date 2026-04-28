@@ -202,7 +202,7 @@ class _AppVersionGateState extends State<AppVersionGate> {
       final installedVersion = packageInfo.version;
 
       final versionResult = await fetchLatestVersion(installedVersion);
-
+      print("Version App : " + installedVersion);
       setState(() {
         _currentVersion = installedVersion;
         _latestVersion = versionResult.latestVersion;
@@ -301,7 +301,7 @@ Future<VersionCheckResult> fetchLatestVersion(String installedVersion) async {
     uri,
     headers: {'Content-Type': 'application/json'},
     body: jsonEncode({
-      'platform': 'android', // change if you support ios too
+      'platform': (Platform.isIOS) ? "ios" : "android",
       'currentVersion': installedVersion,
       'appName': 'Vibranium',
     }),

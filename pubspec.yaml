@@ -1,7 +1,7 @@
 name: app
-description: "A new Flutter project."
+description: "Vibranium E-Sports."
 publish_to: 'none'
-version: 1.0.1
+version: 1.0.1+3
 
 environment:
   sdk: ^3.9.0-164.0.dev
