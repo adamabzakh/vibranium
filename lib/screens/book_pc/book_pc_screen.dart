@@ -280,6 +280,13 @@ class _PcCanvasScreenState extends State<_PcCanvasScreen> {
     final userProvider = context.read<UserProvider>();
     final pcProvider = context.read<PcProvider>();
 
+    setState(() {
+      print("Start Loading");
+      print(userProvider.isLoading);
+      userProvider.initLoading("_lockSelectedPc");
+      print(userProvider.isLoading);
+    });
+
     await userProvider.lockPC(selectedId).then((value) {
       if (!value) return;
     });
@@ -294,7 +301,8 @@ class _PcCanvasScreenState extends State<_PcCanvasScreen> {
       areaId: widget.areaId,
     );
 
-    if (!mounted) return;
+    userProvider.initLoading("_lockSelectedPc");
+    print("finish Loading");
     setState(() => _selectedId = null);
 
     await showDialog<void>(
@@ -423,13 +431,23 @@ class _PcCanvasScreenState extends State<_PcCanvasScreen> {
   }
 
   Widget? _buildBottomBar() {
+    final userProvider = context.watch<UserProvider>();
     if (_selectedId == null) return null;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         child: FilledButton(
-          onPressed: _lockSelectedPc,
-          child: const Text('Continue'),
+          onPressed: (userProvider.isLoading) ? null : _lockSelectedPc,
+          child: (userProvider.isLoading)
+              ? SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 1,
+                  ),
+                )
+              : const Text('Book PC'),
         ),
       ),
     );

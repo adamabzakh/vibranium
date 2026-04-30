@@ -22,7 +22,13 @@ class QueueProvider extends ChangeNotifier {
   Map<String, dynamic>? get bestPosition => _bestPosition;
   List<dynamic> get userQueues => _userQueues;
 
+  void initLoad() {
+    isLoading != isLoading;
+    notifyListeners();
+  }
+
   Future<void> updateQueueStats(String userUuid) async {
+    initLoad();
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/get_queue_stats.php?user_uuid=$userUuid'),
@@ -40,6 +46,7 @@ class QueueProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint("Stats Error: $e");
     }
+    initLoad();
   }
 
   Future<void> getWaitingListActiv() async {
@@ -58,6 +65,7 @@ class QueueProvider extends ChangeNotifier {
   Future<bool> joinWaitingList(
     String uuid,
     String name,
+    bool isEternal,
     String lanesString,
   ) async {
     _isLoading = true;
@@ -70,15 +78,6 @@ class QueueProvider extends ChangeNotifier {
         await Permission.notification.request();
       }
 
-      // 2. Get the Token
-      if (Platform.isIOS) {
-        String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-        if (apnsToken == null) {
-          // If this is null, FCM won't work yet.
-          // Wait a second or retry.
-          await Future.delayed(Duration(seconds: 1));
-        }
-      }
       if (Platform.isIOS) {
         String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
         if (apnsToken == null) {
@@ -98,6 +97,7 @@ class QueueProvider extends ChangeNotifier {
               'user_uuid': uuid,
               'username': name,
               'queue_type': lanesString,
+              'isEternal': isEternal ? "1" : "0",
               'fcm': fcmToken ?? "",
             },
           )

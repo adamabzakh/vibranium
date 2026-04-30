@@ -40,38 +40,44 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void init() async {
-    setState(() {
-      isLoading = true;
-    });
     final userProvider = context.read<UserProvider>();
     final pcProvider = context.read<PcProvider>();
     final queueProvider = context.read<QueueProvider>();
 
-    await userProvider.getUserSessions();
-
-    await pcProvider.fetchMachines();
-
-    userProvider.setUser(
-      await userProvider.getUserByUuid(userProvider.user!.uuid),
-    );
-
-    await userProvider.getCurrectLoggedingPC(pcProvider);
-    await queueProvider.updateQueueStats(userProvider.user!.uuid);
-
-    await pcProvider.fetchConsoles();
-    print("Collection status : ${userProvider.user!.rank.hasCollected}");
-    await userProvider.getUserRank();
-    await userProvider.updateUserRank(isUpdatingCollection: false);
-    await userProvider.registerUser();
-    await userProvider.getLeaderBoard();
-
-    if (kDebugMode) {
-      print("Collection status : ${userProvider.user!.rank.hasCollected}");
-    }
-
     setState(() {
-      isLoading = false;
+      isLoading = true;
     });
+
+    try {
+      // 1. First, get the machines and basic user info (needed for others)
+      await Future.wait([
+        pcProvider.fetchMachines(),
+        userProvider
+            .getUserByUuid(userProvider.user!.uuid)
+            .then((u) => userProvider.setUser(u)),
+      ]);
+
+      // 2. Fire independent calls in parallel to speed up loading
+      await Future.wait([
+        userProvider.getCurrectLoggedingPC(pcProvider),
+        queueProvider.updateQueueStats(userProvider.user!.uuid),
+        pcProvider.fetchConsoles(),
+        userProvider.getUserRank(),
+        userProvider.getLeaderBoard(),
+      ]);
+
+      // 3. Final background tasks
+      await userProvider.updateUserRank(isUpdatingCollection: false);
+      await userProvider.registerUser();
+    } catch (e) {
+      debugPrint("Init Error: $e");
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -253,7 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               rankCard(userProvider.user!.rank),
-
+                              SizedBox(height: 10),
                               if (userProvider.user!.rank.rank.toUpperCase() ==
                                       "VIBE: ETERNAL" &&
                                   userProvider.user!.rank.remainMeals > 0)
@@ -619,23 +625,54 @@ Widget leaderBoardCard(UserProvider userProvider, context) {
                       ),
                       child: ListTile(
                         title: Text(
-                          (userProvider.leaderBoard.first['uuid'] ==
-                                  user['uuid'])
-                              ? (userProvider.user!.uuid == user['uuid'])
-                                    ? "Me (${user['username']})"
-                                    : user['username']
-                              : user['username'],
+                          (() {
+                            // 1. Get the raw username
+                            String rawName = user['username'] ?? "";
+
+                            // 2. Capitalize first letter
+                            String capitalized = rawName.isNotEmpty
+                                ? rawName[0].toUpperCase() +
+                                      rawName.substring(1)
+                                : rawName;
+
+                            // 3. Apply your conditional logic
+                            if (userProvider.leaderBoard.first['uuid'] ==
+                                user['uuid']) {
+                              return (userProvider.user!.uuid == user['uuid'])
+                                  ? "Me ($capitalized)"
+                                  : capitalized;
+                            }
+                            return capitalized;
+                          })(),
                         ),
-                        leading: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Container(
-                            width: 50,
-                            child: Image.asset(
-                              user['rank'].toString().toLowerCase() ==
-                                      "vibe: eternal"
-                                  ? "assets/branding/vibe_eternal.png"
-                                  : "assets/branding/${user['rank'].toString().toLowerCase()}.png",
-                            ),
+                        leading: SizedBox(
+                          width: 80,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.military_tech,
+                                color:
+                                    (userProvider.leaderBoard.first['uuid'] ==
+                                        user['uuid'])
+                                    ? Colors.amber
+                                    : null,
+                              ),
+                              SizedBox(width: 5),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 4,
+                                ),
+                                child: Container(
+                                  width: 50,
+                                  child: Image.asset(
+                                    user['rank'].toString().toLowerCase() ==
+                                            "vibe: eternal"
+                                        ? "assets/branding/vibe_eternal.png"
+                                        : "assets/branding/${user['rank'].toString().toLowerCase()}.png",
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         trailing: Text(user['totalSpent'].toString() + " JD"),
@@ -705,6 +742,9 @@ class _VibraniumVisaCardState extends State<VibraniumVisaCard> {
     // keep progress safe
     progress = progress.clamp(0.0, 1.0);
 
+    final imagePath =
+        "assets/branding/${rankName.toLowerCase().replaceAll(" ", "_").replaceAll(":", "")}.png";
+
     return Container(
       width: double.infinity,
       height: 230,
@@ -729,6 +769,22 @@ class _VibraniumVisaCardState extends State<VibraniumVisaCard> {
         borderRadius: BorderRadius.circular(24),
         child: Stack(
           children: [
+            // --- RANK IMAGE PLACEHOLDER ---
+            (rankName == "None")
+                ? Container()
+                : Positioned(
+                    right: 20,
+                    top: 40,
+                    child: Opacity(
+                      opacity: 0.4,
+                      child: Image.asset(
+                        imagePath, // Pass your rank icon here
+                        width: 140,
+                        height: 140,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
             // --- CARD CONTENT ---
             Padding(
               padding: const EdgeInsets.all(24.0),
@@ -791,41 +847,50 @@ class _VibraniumVisaCardState extends State<VibraniumVisaCard> {
                           userProvider.user!.rank.rank != "Unranked" &&
                           userProvider.user!.rank.rank != "None")
                       ? ElevatedButton(
-                          onPressed: () async {
-                            setState(() {
-                              userProvider.initLoad();
-                            });
-                            await userProvider.addTime(
-                              prizeOld: int.parse(
-                                userProvider.user!.rank.reward,
-                              ),
-                            );
-                            await userProvider.updateUserRank(
-                              isUpdatingCollection: true,
-                            );
-                            userProvider.setUser(
-                              await userProvider.getUserByUuid(
-                                userProvider.user!.uuid,
-                              ),
-                            );
-                            await userProvider.getUserRank();
-                            setState(() {
-                              userProvider.initLoad();
-                            });
-                          },
+                          onPressed: (userProvider.isLoadingCollection)
+                              ? null
+                              : () async {
+                                  userProvider.initLoading("LoadingCollection");
+                                  userProvider.initLoadCollection();
+                                  await userProvider.addTime(
+                                    prizeOld: int.parse(
+                                      userProvider.user!.rank.reward,
+                                    ),
+                                  );
+                                  await userProvider.updateUserRank(
+                                    isUpdatingCollection: true,
+                                  );
+                                  userProvider.setUser(
+                                    await userProvider.getUserByUuid(
+                                      userProvider.user!.uuid,
+                                    ),
+                                  );
+                                  await userProvider.getUserRank();
+                                  userProvider.initLoading("LoadingCollection");
+                                  userProvider.initLoadCollection();
+                                },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: themeColor,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(9),
                             ),
                           ),
-                          child: Text(
-                            'Collect ${userProvider.user!.rank.reward} Hours reward',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                          child: (userProvider.isLoadingCollection)
+                              ? SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 1,
+                                  ),
+                                )
+                              : Text(
+                                  'Collect ${userProvider.user!.rank.reward} Hours reward',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
                         )
                       : Container(),
 
@@ -900,35 +965,65 @@ class _CurrentBookedPcCard extends StatelessWidget {
       child: InkWell(
         splashColor: Colors.transparent,
         onTap: () {
+          bool loadingLogout = false;
           showDialog(
             context: context,
-            builder: (context) => AlertDialog(
-              title: Text('Logout from PC'),
-              content: Text('Are you sure you want to logout from PC?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text('Cancel'),
-                ),
+            builder: (ctx) {
+              final userProvider2 = ctx.watch<UserProvider>();
+              return StatefulBuilder(
+                builder: (context, sS) {
+                  return AlertDialog(
+                    title: Text('Logout from PC'),
+                    content: Text('Are you sure you want to logout from PC?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text('Cancel'),
+                      ),
 
-                FilledButton(
-                  onPressed: () async {
-                    final success = await userProvider.logoutUserFromPc();
-                    if (success) {
-                      Navigator.of(context).pop();
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Failed to logout from PC'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  },
-                  child: Text('Logout'),
-                ),
-              ],
-            ),
+                      FilledButton(
+                        onPressed: (loadingLogout)
+                            ? null
+                            : () async {
+                                sS(() {
+                                  loadingLogout = true;
+                                });
+                                final success = await userProvider2
+                                    .logoutUserFromPc();
+                                if (success) {
+                                  sS(() {
+                                    loadingLogout = false;
+                                  });
+                                  Navigator.of(context).pop();
+                                } else {
+                                  sS(() {
+                                    loadingLogout = false;
+                                  });
+                                  Navigator.of(context).pop();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Failed to logout from PC'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              },
+                        child: (loadingLogout)
+                            ? SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 1,
+                                ),
+                              )
+                            : const Text('Logout'),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
           );
         },
         child: Padding(

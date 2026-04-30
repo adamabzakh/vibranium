@@ -27,6 +27,7 @@ class UserProvider extends ChangeNotifier {
   GgLeapUser? get user => _user;
 
   bool isLoading = false;
+  bool isLoadingCollection = false;
 
   List<GgSession> userSesstions = [];
   List<UserTime> userTime = [];
@@ -37,6 +38,7 @@ class UserProvider extends ChangeNotifier {
   List leaderBoard = [];
 
   Future<void> getLeaderBoard() async {
+    initLoad("getLeaderBoard");
     final response = await http.get(
       Uri.parse("https://vibraniumjobooking.com/api/userLeaderBoard.php"),
     );
@@ -49,12 +51,14 @@ class UserProvider extends ChangeNotifier {
     } else {
       print("Faild to get LeaderBoard : ${response.statusCode}");
     }
+
+    initLoad("getLeaderBoard");
   }
 
   Future<void> getCurrectLoggedingPC(PcProvider pcProvider) async {
     if (pcProvider.pcs.isEmpty) {
       await pcProvider.fetchMachines();
-      getCurrectLoggedingPC(pcProvider);
+      await getCurrectLoggedingPC(pcProvider);
     } else {
       GgMachine? loggedinPC = pcProvider.pcs.firstWhere(
         (element) => element.userUuid == user!.uuid,
@@ -105,16 +109,19 @@ class UserProvider extends ChangeNotifier {
   }
 
   Future<void> registerUser() async {
-    if (!(await Permission.notification.isGranted)) {
-      await Permission.notification.request();
-    }
-
-    // Replace with your actual domain
-    final url = Uri.parse(
-      'https://vibraniumjobooking.com/api/register_user.php',
-    );
-
+    initLoad("registerUser");
     try {
+      if (!(await Permission.notification.isGranted)) {
+        await Permission.notification.request();
+
+        print("Requesting Notification Permission");
+      }
+
+      // Replace with your actual domain
+      final url = Uri.parse(
+        'https://vibraniumjobooking.com/api/register_user.php',
+      );
+
       if (Platform.isIOS) {
         String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
         if (apnsToken == null) {
@@ -149,6 +156,10 @@ class UserProvider extends ChangeNotifier {
       }
     } catch (e) {
       print("Network error: $e");
+    } finally {
+      isLoading = false;
+      print("gdefijnwwifdwk");
+      notifyListeners();
     }
   }
 
@@ -247,6 +258,7 @@ class UserProvider extends ChangeNotifier {
   }
 
   Future<bool> logoutUserFromPc() async {
+    initLoading("logoutUserFromPc");
     final String url = '${ApiConfig.apiBaseUrl}/machines/execute-action';
     final response = await http.post(
       Uri.parse(url),
@@ -268,15 +280,18 @@ class UserProvider extends ChangeNotifier {
       await SharedPreferences.getInstance().then((prefs) {
         prefs.remove('current_booked_pc_v1');
       });
+      initLoading("logoutUserFromPc");
       notifyListeners();
       return true;
     } else {
       print('Failed to logout user from pc: ${response.body}');
+      initLoading("logoutUserFromPc");
       return false;
     }
   }
 
   Future<void> getUserTime() async {
+    initLoad("getUserTime");
     final String url =
         '${ApiConfig.apiBaseUrl}/users/gamepasses/list?UserUuid=${user!.uuid}';
 
@@ -327,8 +342,9 @@ class UserProvider extends ChangeNotifier {
       }
     } catch (e) {
       print('Error fetching sessions: $e');
-      throw Exception('Error fetching sessions: $e');
     }
+
+    initLoad("getUserTime");
   }
 
   void setUser(GgLeapUser user) {
@@ -344,6 +360,7 @@ class UserProvider extends ChangeNotifier {
   }
 
   Future<void> loadPoints() async {
+    initLoad("loadPoints");
     final String url =
         '${ApiConfig.apiBaseUrl}/coins/balance?UserUuid=${user!.uuid}';
 
@@ -392,6 +409,7 @@ class UserProvider extends ChangeNotifier {
       user!.pointsBalance = 0.0;
       notifyListeners();
     }
+    initLoad("loadPoints");
   }
 
   Future<bool> lockPC(pcUid) async {
@@ -408,10 +426,11 @@ class UserProvider extends ChangeNotifier {
       }),
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode <= 299) {
       return true;
     } else {
       print('Failed to book pc: ${response.body}');
+
       return false;
     }
   }
@@ -603,6 +622,7 @@ class UserProvider extends ChangeNotifier {
   }
 
   Future<GgLeapUser> getUserByUuid(String userUuid) async {
+    initLoad("getUserByUuid");
     final response = await http.get(
       Uri.parse('${ApiConfig.apiBaseUrl}/users/user-details?Uuid=$userUuid'),
       headers: {
@@ -612,10 +632,12 @@ class UserProvider extends ChangeNotifier {
     );
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
+      initLoad("getUserByUuid");
       return GgLeapUser.fromJson(data['User']);
     } else {
       print('Failed to get user: ${response.body}');
-      throw Exception('Failed to get user: ${response.body}');
+      initLoad("getUserByUuid");
+      return GgLeapUser.fromJson({});
     }
   }
 
@@ -653,6 +675,7 @@ class UserProvider extends ChangeNotifier {
   }
 
   Future<void> getUserRank() async {
+    initLoad("getUserRank");
     final uri = Uri.https('vibraniumjobooking.com', '/api/user_manager.php');
 
     final response = await http.post(
@@ -671,6 +694,7 @@ class UserProvider extends ChangeNotifier {
       print('Error: ${response.statusCode}');
       print('Body: ${response.body}');
     }
+    initLoad("getUserRank");
   }
 
   void updateCollectionStatus(bool hasCollected) {
@@ -678,16 +702,26 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void initLoad() {
+  void initLoad(String fun) {
     isLoading = !isLoading;
+    print("Last load state $isLoading from $fun");
+    notifyListeners();
+  }
+
+  void initLoading(String fun) {
+    isLoading = !isLoading;
+    print("Last load state $isLoading from $fun");
+    notifyListeners();
+  }
+
+  void initLoadCollection() {
+    isLoadingCollection = !isLoadingCollection;
     notifyListeners();
   }
 
   Future<void> updateUserRank({isUpdatingCollection}) async {
     print("Updating User Rank...");
-    isLoading = true;
-    notifyListeners();
-
+    initLoad("updateUserRank");
     try {
       final uri = Uri.https(
         'api.ggleap.com',
@@ -745,10 +779,9 @@ class UserProvider extends ChangeNotifier {
       );
     } catch (e) {
       print("updateUserRank error: $e");
-    } finally {
-      isLoading = false;
-      notifyListeners();
     }
+
+    initLoad("updateUserRank");
   }
 
   Future<void> updateUserOld({
@@ -806,46 +839,6 @@ class UserProvider extends ChangeNotifier {
     } else {
       // Progress toward Cobalt (0 to 50)
       return totalSpent / 50;
-    }
-  }
-
-  Future<void> getUserSessions() async {
-    final String url =
-        '${ApiConfig.apiBaseUrl}/users/gamepasses/list?UserUuid=${user!.uuid}';
-
-    try {
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $currentJWT',
-        },
-      );
-
-      ApiConfig.printCurl(
-        method: 'GET',
-        url: Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $currentJWT',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        // 3. Decode the list of sessions
-        final List<dynamic> sessions = jsonDecode(response.body)["Offers"];
-
-        userSesstions = sessions.map((s) => GgSession.fromJson(s)).toList();
-        notifyListeners();
-      } else {
-        print('Failed to get user sessions: ${response.body}');
-        throw Exception('Failed to get sessions: ${response.body}');
-      }
-    } catch (e) {
-      print('Error fetching sessions: $e');
-      isLoading = false;
-      userSesstions = [];
-      notifyListeners();
     }
   }
 

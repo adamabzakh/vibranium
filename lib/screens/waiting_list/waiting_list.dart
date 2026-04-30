@@ -247,6 +247,7 @@ class _WaitingListScreenState extends State<WaitingListScreen> {
                                 bool success = await qp.joinWaitingList(
                                   up.user!.uuid,
                                   up.user!.username,
+                                  (up.user!.rank.rank == "VIBE: Eternal"),
                                   lanesCsv,
                                 );
                                 if (success)
@@ -310,6 +311,7 @@ class _WaitingListScreenState extends State<WaitingListScreen> {
                       itemBuilder: (context, index) {
                         final person = allWaitingUsers[index];
                         bool isMe = person['user_uuid'] == up.user!.uuid;
+                        bool isEternal = person['isEternal'];
 
                         return Container(
                           margin: const EdgeInsets.only(bottom: 12),
@@ -321,7 +323,9 @@ class _WaitingListScreenState extends State<WaitingListScreen> {
                               left: BorderSide(
                                 color: isMe
                                     ? accentGreen
-                                    : accentMagenta.withOpacity(0.2),
+                                    : (isEternal
+                                          ? Colors.yellow.withOpacity(0.2)
+                                          : accentMagenta.withOpacity(0.2)),
                                 width: 8,
                               ),
                             ),
@@ -382,6 +386,12 @@ class _WaitingListScreenState extends State<WaitingListScreen> {
                               ),
                               if (isMe)
                                 Icon(Icons.stars, color: accentGreen, size: 24),
+                              if (isEternal)
+                                Icon(
+                                  Icons.military_tech_outlined,
+                                  color: Colors.yellow,
+                                  size: 24,
+                                ),
                             ],
                           ),
                         );
